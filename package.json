@@ -1,0 +1,31 @@
+{
+    "name": "tinymce.html",
+    "version": "4.2.5",
+    "description": "HTML parsing, filtering and serialization logic extracted from TinyMCE",
+    "main": "tinymce.html.js",
+    "devDependencies": {
+        "amdlc": "^0.1.6",
+        "fs-extra": "^0.24.0",
+        "globby": "^3.0.0",
+        "qunit": "^0.7.6",
+        "tinymce": "tinymce/tinymce.git#4.2.5"
+    },
+    "keywords": [
+        "html",
+        "tinymce",
+        "valid_elements"
+    ],
+    "contributors": [
+        "Ephox Corp. (http://tinymce.com/)",
+        "Georgii Dolzhykov <georgii.dolzhykov@gmail.com>"
+    ],
+    "license": "LGPL-2.1",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/thorn0/tinymce.html.git"
+    },
+    "scripts": {
+        "build": "node build.js",
+        "test": "node test.js"
+    }
+}
