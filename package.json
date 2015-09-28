@@ -1,19 +1,22 @@
 {
     "name": "tinymce.html",
-    "version": "4.2.5",
+    "version": "4.2.6",
     "description": "HTML parsing, filtering and serialization logic extracted from TinyMCE",
+    "files": ["tinymce.html.js"],
     "main": "tinymce.html.js",
     "devDependencies": {
         "amdlc": "^0.1.6",
         "fs-extra": "^0.24.0",
         "globby": "^3.0.0",
         "qunit": "^0.7.6",
-        "tinymce": "tinymce/tinymce.git#4.2.5"
+        "tinymce": "tinymce/tinymce.git#4.2.6"
     },
     "keywords": [
         "html",
         "tinymce",
-        "valid_elements"
+        "valid_elements",
+        "tag-soup",
+        "cleanup"
     ],
     "contributors": [
         "Ephox Corp. (http://tinymce.com/)",

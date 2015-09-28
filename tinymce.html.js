@@ -1,4 +1,4 @@
-// 4.2.5 (2015-08-31)
+// 4.2.6 (2015-09-28)
 
 /**
  * Compiled inline version. (Library mode)
