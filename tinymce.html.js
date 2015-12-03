@@ -1,4 +1,4 @@
-// 4.2.7 (2015-10-27)
+// 4.3.1 (2015-11-30)
 
 /**
  * Compiled inline version. (Library mode)
@@ -683,8 +683,8 @@ define("tinymce/util/Arr", [], function() {
 	function filter(a, f) {
 		var o = [];
 
-		each(a, function(v) {
-			if (!f || f(v)) {
+		each(a, function(v, index) {
+			if (!f || f(v, index, a)) {
 				o.push(v);
 			}
 		});
@@ -711,7 +711,6 @@ define("tinymce/util/Arr", [], function() {
 
 		if (arguments.length < 3) {
 			accumulator = collection[0];
-			i = 1;
 		}
 
 		for (; i < collection.length; i++) {
@@ -721,6 +720,32 @@ define("tinymce/util/Arr", [], function() {
 		return accumulator;
 	}
 
+	function findIndex(array, predicate, thisArg) {
+		var i, l;
+
+		for (i = 0, l = array.length; i < l; i++) {
+			if (predicate.call(thisArg, array[i], i, array)) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	function find(array, predicate, thisArg) {
+		var idx = findIndex(array, predicate, thisArg);
+
+		if (idx !== -1) {
+			return array[idx];
+		}
+
+		return undefined;
+	}
+
+	function last(collection) {
+		return collection[collection.length - 1];
+	}
+
 	return {
 		isArray: isArray,
 		toArray: toArray,
@@ -728,7 +753,10 @@ define("tinymce/util/Arr", [], function() {
 		map: map,
 		filter: filter,
 		indexOf: indexOf,
-		reduce: reduce
+		reduce: reduce,
+		findIndex: findIndex,
+		find: find,
+		last: last
 	};
 });
 
@@ -821,7 +849,7 @@ define("tinymce/util/Tools", [
 	 * More details on this method can be found in the Wiki.
 	 *
 	 * @method create
-	 * @param {String} s Class name, inheritage and prefix.
+	 * @param {String} s Class name, inheritance and prefix.
 	 * @param {Object} p Collection of methods to add to the class.
 	 * @param {Object} root Optional root object defaults to the global window object.
 	 * @example
@@ -1580,7 +1608,7 @@ define("tinymce/html/Schema", [
 						'blockquote center dir fieldset header footer article section hgroup aside nav figure');
 		blockElementsMap = createLookupTable('block_elements', 'hr table tbody thead tfoot ' +
 						'th tr td li ol ul caption dl dt dd noscript menu isindex option ' +
-						'datalist select optgroup', textBlockElementsMap);
+						'datalist select optgroup figcaption', textBlockElementsMap);
 		textInlineElementsMap = createLookupTable('text_inline_elements', 'span strong b em i font strike u var cite ' +
 										'dfn code mark q sup sub samp');
 
