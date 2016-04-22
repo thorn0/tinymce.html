@@ -1,15 +1,15 @@
 {
     "name": "tinymce.html",
-    "version": "4.3.1",
+    "version": "4.3.10",
     "description": "HTML parsing, filtering and serialization logic extracted from TinyMCE",
     "files": ["tinymce.html.js"],
     "main": "tinymce.html.js",
     "devDependencies": {
         "amdlc": "^0.1.6",
-        "fs-extra": "^0.26.2",
+        "fs-extra": "^0.28",
         "globby": "^4.0.0",
-        "qunit": "^0.7.7",
-        "tinymce": "tinymce/tinymce.git#4.3.1"
+        "qunit": "^0.9.1",
+        "tinymce": "tinymce/tinymce.git#4.3.10"
     },
     "keywords": [
         "html",
