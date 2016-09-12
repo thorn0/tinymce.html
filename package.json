@@ -1,34 +1,39 @@
 {
-    "name": "tinymce.html",
-    "version": "4.3.10",
-    "description": "HTML parsing, filtering and serialization logic extracted from TinyMCE",
-    "files": ["tinymce.html.js"],
-    "main": "tinymce.html.js",
-    "devDependencies": {
-        "amdlc": "^0.1.6",
-        "fs-extra": "^0.28",
-        "globby": "^4.0.0",
-        "qunit": "^0.9.1",
-        "tinymce": "tinymce/tinymce.git#4.3.10"
-    },
-    "keywords": [
-        "html",
-        "tinymce",
-        "valid_elements",
-        "tag-soup",
-        "cleanup"
-    ],
-    "contributors": [
-        "Ephox Corp. (http://tinymce.com/)",
-        "Georgii Dolzhykov <georgii.dolzhykov@gmail.com>"
-    ],
-    "license": "LGPL-2.1",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/thorn0/tinymce.html.git"
-    },
-    "scripts": {
-        "build": "node build.js",
-        "test": "node test.js"
-    }
+  "name": "tinymce.html",
+  "version": "4.4.3",
+  "description": "HTML parsing, filtering and serialization logic extracted from TinyMCE",
+  "files": [
+    "tinymce.html.js"
+  ],
+  "main": "tinymce.html.js",
+  "devDependencies": {
+    "amdlc": "^0.1.6",
+    "fs-extra": "^0.30",
+    "globby": "^6.0.0",
+    "js-beautify": "^1.6.4",
+    "qunit": "^0.9.1",
+    "tinymce": "tinymce/tinymce.git#4.4.3",
+    "uglify-js": "^2.7.3"
+  },
+  "keywords": [
+    "html",
+    "tinymce",
+    "valid_elements",
+    "tag-soup",
+    "cleanup",
+    "sanitizer"
+  ],
+  "contributors": [
+    "Ephox Corp. (http://tinymce.com/)",
+    "Georgii Dolzhykov <georgii.dolzhykov@gmail.com>"
+  ],
+  "license": "LGPL-2.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thorn0/tinymce.html.git"
+  },
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test.js"
+  }
 }

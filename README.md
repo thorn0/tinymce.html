@@ -1,8 +1,9 @@
 # tinymce.html
 [TinyMCE](http://www.tinymce.com) includes sophisticated logic for cleaning up
 HTML content. What's interesting about this logic is that it's pure JavaScript.
-As it doesn't use any browser-specific APIs, it can be used with Node.js.
+It doesn't use any browser-specific APIs and can be used with Node.js.
 
+[![Build Status](https://travis-ci.org/thorn0/tinymce.html.svg?branch=master)](https://travis-ci.org/thorn0/tinymce.html)
 [![npm](https://img.shields.io/npm/v/tinymce.html.svg)](https://www.npmjs.com/package/tinymce.html)
 
 ## Example
@@ -14,16 +15,18 @@ var schema = new tinymce.html.Schema({
     valid_elements: "@[class],#p,span,a[!href],strong/b",
     valid_classes: "foo"
 });
+
+var parser = new tinymce.html.Parser({
+    forced_root_block: 'p'
+}, schema);
+
 var serializer = new tinymce.html.Serializer({
     indent: true,
     indent_before: 'p',
     indent_after: 'p'
 }, schema);
-var parser = new tinymce.html.DomParser({
-    forced_root_block: 'p'
-}, schema);
 
-var initialHtml = '<B title="title" class="foo bar">test</B><a href="//tinymce.com">' +
+var html = '<B title="title" class="foo bar">test</B><a href="//tinymce.com">' +
     'TinyMCE</a><p>Lorem <a>Ipsum</a></p>';
 var root = parser.parse(initialHtml);
 var result = serializer.serialize(root);
@@ -36,19 +39,23 @@ console.log(result);
 ## Options
 
 * Schema:
-`verify_html`,
-[`schema`](http://www.tinymce.com/wiki.php/Configuration:schema),
-[`extended_valid_elements`](http://www.tinymce.com/wiki.php/Configuration:extended_valid_elements),
-[`invalid_elements`](http://www.tinymce.com/wiki.php/Configuration:invalid_elements),
-[`valid_elements`](http://www.tinymce.com/wiki.php/Configuration:valid_elements),
-[`valid_classes`](http://www.tinymce.com/wiki.php/Configuration:valid_classes),
-[`valid_children`](http://www.tinymce.com/wiki.php/Configuration:valid_children),
-[`custom_elements`](http://www.tinymce.com/wiki.php/Configuration:custom_elements)
+
+    * [`valid_elements`](https://www.tinymce.com/docs/configure/content-filtering/#valid_elements)
+    * [`valid_classes`](https://www.tinymce.com/docs/configure/content-filtering/#valid_classes)
+    * [`valid_children`](https://www.tinymce.com/docs/configure/content-filtering/#valid_children)
+    * [`valid_styles`](https://www.tinymce.com/docs/configure/content-filtering/#valid_styles) (use `tinymce.html.Parser` for this option to work, not `tinymce.html.DomParser`)
+    * [`extended_valid_elements`](https://www.tinymce.com/docs/configure/content-filtering/#extended_valid_elements)
+    * [`invalid_elements`](https://www.tinymce.com/docs/configure/content-filtering/#invalid_elements)
+    * [`custom_elements`](https://www.tinymce.com/docs/configure/content-filtering/#custom_elements)
+    * [`schema`](https://www.tinymce.com/docs/configure/content-filtering/#schema) (`"html5"`, `"html4"`, `"html5-strict"`)
 * Parser:
-[`forced_root_block`](http://www.tinymce.com/wiki.php/Configuration:forced_root_block)
-* Serializer: `indent`, `indent_before`, `indent_after`
+    * [`forced_root_block`](https://www.tinymce.com/docs/configure/content-filtering/#forced_root_block)
+* Serializer:
+    * `indent`
+    * `indent_before`
+    * `indent_after`
 
 ## Links
 
-* [API Documentation](http://www.tinymce.com/wiki.php/api4:namespace.tinymce.html)
+* [API Documentation](https://www.tinymce.com/docs/api/tinymce.html/)
 * [TinyMCE on GitHub](https://github.com/tinymce/tinymce)

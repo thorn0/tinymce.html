@@ -4,7 +4,7 @@ var testrunner = require('qunit'), // https://github.com/kof/node-qunit
     path = require('path');
 
 var mainLibFile = 'tinymce.html.js';
-var srcTestWildcard = ['node_modules/tinymce/tests/tinymce/html/!(Styles).js'];
+var srcTestWildcard = ['node_modules/tinymce/tests/tinymce/html/*.js', 'test/*.js'];
 var tmpTestDir = 'tmptests';
 var tranformedMainLibFile = path.resolve(tmpTestDir, path.basename(mainLibFile));
 
