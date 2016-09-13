@@ -46,423 +46,6 @@
             target[fragments[fragments.length - 1]] = modules[id];
         }
     }
-    // Included from: node_modules/tinymce/js/tinymce/classes/html/Node.js
-    /**
-     * Node.js
-     *
-     * Released under LGPL License.
-     * Copyright (c) 1999-2015 Ephox Corp. All rights reserved
-     *
-     * License: http://www.tinymce.com/license
-     * Contributing: http://www.tinymce.com/contributing
-     */
-    /**
-     * This class is a minimalistic implementation of a DOM like node used by the DomParser class.
-     *
-     * @example
-     * var node = new tinymce.html.Node('strong', 1);
-     * someRoot.append(node);
-     *
-     * @class tinymce.html.Node
-     * @version 3.4
-     */
-    define('tinymce/html/Node', [], function() {
-        var whiteSpaceRegExp = /^[ \t\r\n]*$/,
-            typeLookup = {
-                '#text': 3,
-                '#comment': 8,
-                '#cdata': 4,
-                '#pi': 7,
-                '#doctype': 10,
-                '#document-fragment': 11
-            };
-        // Walks the tree left/right
-        function walk(node, root_node, prev) {
-            var sibling, parent, startName = prev ? 'lastChild' : 'firstChild',
-                siblingName = prev ? 'prev' : 'next';
-            // Walk into nodes if it has a start
-            if (node[startName]) {
-                return node[startName];
-            }
-            // Return the sibling if it has one
-            if (node !== root_node) {
-                sibling = node[siblingName];
-                if (sibling) {
-                    return sibling;
-                }
-                // Walk up the parents to look for siblings
-                for (parent = node.parent; parent && parent !== root_node; parent = parent.parent) {
-                    sibling = parent[siblingName];
-                    if (sibling) {
-                        return sibling;
-                    }
-                }
-            }
-        }
-        /**
-         * Constructs a new Node instance.
-         *
-         * @constructor
-         * @method Node
-         * @param {String} name Name of the node type.
-         * @param {Number} type Numeric type representing the node.
-         */
-        function Node(name, type) {
-            this.name = name;
-            this.type = type;
-            if (1 === type) {
-                this.attributes = [];
-                this.attributes.map = {};
-            }
-        }
-        Node.prototype = {
-            /**
-             * Replaces the current node with the specified one.
-             *
-             * @example
-             * someNode.replace(someNewNode);
-             *
-             * @method replace
-             * @param {tinymce.html.Node} node Node to replace the current node with.
-             * @return {tinymce.html.Node} The old node that got replaced.
-             */
-            replace: function(node) {
-                var self = this;
-                node.parent && node.remove();
-                self.insert(node, self);
-                self.remove();
-                return self;
-            },
-            /**
-             * Gets/sets or removes an attribute by name.
-             *
-             * @example
-             * someNode.attr("name", "value"); // Sets an attribute
-             * console.log(someNode.attr("name")); // Gets an attribute
-             * someNode.attr("name", null); // Removes an attribute
-             *
-             * @method attr
-             * @param {String} name Attribute name to set or get.
-             * @param {String} value Optional value to set.
-             * @return {String/tinymce.html.Node} String or undefined on a get operation or the current node on a set operation.
-             */
-            attr: function(name, value) {
-                var attrs, i, undef, self = this;
-                if ('string' !== typeof name) {
-                    for (i in name) {
-                        self.attr(i, name[i]);
-                    }
-                    return self;
-                }
-                if (attrs = self.attributes) {
-                    if (value !== undef) {
-                        // Remove attribute
-                        if (null === value) {
-                            if (name in attrs.map) {
-                                delete attrs.map[name];
-                                i = attrs.length;
-                                while (i--) {
-                                    if (attrs[i].name === name) {
-                                        attrs = attrs.splice(i, 1);
-                                        return self;
-                                    }
-                                }
-                            }
-                            return self;
-                        }
-                        // Set attribute
-                        if (name in attrs.map) {
-                            // Set attribute
-                            i = attrs.length;
-                            while (i--) {
-                                if (attrs[i].name === name) {
-                                    attrs[i].value = value;
-                                    break;
-                                }
-                            }
-                        } else {
-                            attrs.push({
-                                name: name,
-                                value: value
-                            });
-                        }
-                        attrs.map[name] = value;
-                        return self;
-                    }
-                    return attrs.map[name];
-                }
-            },
-            /**
-             * Does a shallow clones the node into a new node. It will also exclude id attributes since
-             * there should only be one id per document.
-             *
-             * @example
-             * var clonedNode = node.clone();
-             *
-             * @method clone
-             * @return {tinymce.html.Node} New copy of the original node.
-             */
-            clone: function() {
-                var i, l, selfAttrs, selfAttr, cloneAttrs, self = this,
-                    clone = new Node(self.name, self.type);
-                // Clone element attributes
-                if (selfAttrs = self.attributes) {
-                    cloneAttrs = [];
-                    cloneAttrs.map = {};
-                    for (i = 0, l = selfAttrs.length; i < l; i++) {
-                        selfAttr = selfAttrs[i];
-                        // Clone everything except id
-                        if ('id' !== selfAttr.name) {
-                            cloneAttrs[cloneAttrs.length] = {
-                                name: selfAttr.name,
-                                value: selfAttr.value
-                            };
-                            cloneAttrs.map[selfAttr.name] = selfAttr.value;
-                        }
-                    }
-                    clone.attributes = cloneAttrs;
-                }
-                clone.value = self.value;
-                clone.shortEnded = self.shortEnded;
-                return clone;
-            },
-            /**
-             * Wraps the node in in another node.
-             *
-             * @example
-             * node.wrap(wrapperNode);
-             *
-             * @method wrap
-             */
-            wrap: function(wrapper) {
-                var self = this;
-                self.parent.insert(wrapper, self);
-                wrapper.append(self);
-                return self;
-            },
-            /**
-             * Unwraps the node in other words it removes the node but keeps the children.
-             *
-             * @example
-             * node.unwrap();
-             *
-             * @method unwrap
-             */
-            unwrap: function() {
-                var node, next, self = this;
-                for (node = self.firstChild; node;) {
-                    next = node.next;
-                    self.insert(node, self, true);
-                    node = next;
-                }
-                self.remove();
-            },
-            /**
-             * Removes the node from it's parent.
-             *
-             * @example
-             * node.remove();
-             *
-             * @method remove
-             * @return {tinymce.html.Node} Current node that got removed.
-             */
-            remove: function() {
-                var self = this,
-                    parent = self.parent,
-                    next = self.next,
-                    prev = self.prev;
-                if (parent) {
-                    if (parent.firstChild === self) {
-                        parent.firstChild = next;
-                        next && (next.prev = null);
-                    } else {
-                        prev.next = next;
-                    }
-                    if (parent.lastChild === self) {
-                        parent.lastChild = prev;
-                        prev && (prev.next = null);
-                    } else {
-                        next.prev = prev;
-                    }
-                    self.parent = self.next = self.prev = null;
-                }
-                return self;
-            },
-            /**
-             * Appends a new node as a child of the current node.
-             *
-             * @example
-             * node.append(someNode);
-             *
-             * @method append
-             * @param {tinymce.html.Node} node Node to append as a child of the current one.
-             * @return {tinymce.html.Node} The node that got appended.
-             */
-            append: function(node) {
-                var last, self = this;
-                node.parent && node.remove();
-                last = self.lastChild;
-                if (last) {
-                    last.next = node;
-                    node.prev = last;
-                    self.lastChild = node;
-                } else {
-                    self.lastChild = self.firstChild = node;
-                }
-                node.parent = self;
-                return node;
-            },
-            /**
-             * Inserts a node at a specific position as a child of the current node.
-             *
-             * @example
-             * parentNode.insert(newChildNode, oldChildNode);
-             *
-             * @method insert
-             * @param {tinymce.html.Node} node Node to insert as a child of the current node.
-             * @param {tinymce.html.Node} ref_node Reference node to set node before/after.
-             * @param {Boolean} before Optional state to insert the node before the reference node.
-             * @return {tinymce.html.Node} The node that got inserted.
-             */
-            insert: function(node, ref_node, before) {
-                var parent;
-                node.parent && node.remove();
-                parent = ref_node.parent || this;
-                if (before) {
-                    ref_node === parent.firstChild ? parent.firstChild = node : ref_node.prev.next = node;
-                    node.prev = ref_node.prev;
-                    node.next = ref_node;
-                    ref_node.prev = node;
-                } else {
-                    ref_node === parent.lastChild ? parent.lastChild = node : ref_node.next.prev = node;
-                    node.next = ref_node.next;
-                    node.prev = ref_node;
-                    ref_node.next = node;
-                }
-                node.parent = parent;
-                return node;
-            },
-            /**
-             * Get all children by name.
-             *
-             * @method getAll
-             * @param {String} name Name of the child nodes to collect.
-             * @return {Array} Array with child nodes matchin the specified name.
-             */
-            getAll: function(name) {
-                var node, self = this,
-                    collection = [];
-                for (node = self.firstChild; node; node = walk(node, self)) {
-                    node.name === name && collection.push(node);
-                }
-                return collection;
-            },
-            /**
-             * Removes all children of the current node.
-             *
-             * @method empty
-             * @return {tinymce.html.Node} The current node that got cleared.
-             */
-            empty: function() {
-                var nodes, i, node, self = this;
-                // Remove all children
-                if (self.firstChild) {
-                    nodes = [];
-                    // Collect the children
-                    for (node = self.firstChild; node; node = walk(node, self)) {
-                        nodes.push(node);
-                    }
-                    // Remove the children
-                    i = nodes.length;
-                    while (i--) {
-                        node = nodes[i];
-                        node.parent = node.firstChild = node.lastChild = node.next = node.prev = null;
-                    }
-                }
-                self.firstChild = self.lastChild = null;
-                return self;
-            },
-            /**
-             * Returns true/false if the node is to be considered empty or not.
-             *
-             * @example
-             * node.isEmpty({img: true});
-             * @method isEmpty
-             * @param {Object} elements Name/value object with elements that are automatically treated as non empty elements.
-             * @return {Boolean} true/false if the node is empty or not.
-             */
-            isEmpty: function(elements) {
-                var i, name, self = this,
-                    node = self.firstChild;
-                if (node) {
-                    do {
-                        if (1 === node.type) {
-                            // Ignore bogus elements
-                            if (node.attributes.map['data-mce-bogus']) {
-                                continue;
-                            }
-                            // Keep empty elements like <img />
-                            if (elements[node.name]) {
-                                return false;
-                            }
-                            // Keep bookmark nodes and name attribute like <a name="1"></a>
-                            i = node.attributes.length;
-                            while (i--) {
-                                name = node.attributes[i].name;
-                                if ('name' === name || 0 === name.indexOf('data-mce-bookmark')) {
-                                    return false;
-                                }
-                            }
-                        }
-                        // Keep comments
-                        if (8 === node.type) {
-                            return false;
-                        }
-                        // Keep non whitespace text nodes
-                        if (3 === node.type && !whiteSpaceRegExp.test(node.value)) {
-                            return false;
-                        }
-                    } while (node = walk(node, self));
-                }
-                return true;
-            },
-            /**
-             * Walks to the next or previous node and returns that node or null if it wasn't found.
-             *
-             * @method walk
-             * @param {Boolean} prev Optional previous node state defaults to false.
-             * @return {tinymce.html.Node} Node that is next to or previous of the current node.
-             */
-            walk: function(prev) {
-                return walk(this, null, prev);
-            }
-        };
-        /**
-         * Creates a node of a specific type.
-         *
-         * @static
-         * @method create
-         * @param {String} name Name of the node type to create for example "b" or "#text".
-         * @param {Object} attrs Name/value collection of attributes that will be applied to elements.
-         */
-        Node.create = function(name, attrs) {
-            var node, attrName;
-            // Create node
-            node = new Node(name, typeLookup[name] || 1);
-            // Add attributes if needed
-            if (attrs) {
-                for (attrName in attrs) {
-                    node.attr(attrName, attrs[attrName]);
-                }
-            }
-            return node;
-        };
-        return Node;
-    });
-    // Included from: Env.stub.js
-    define('tinymce/Env', [], function() {
-        return {};
-    });
     // Included from: node_modules/tinymce/js/tinymce/classes/util/Arr.js
     /**
      * Arr.js
@@ -590,7 +173,7 @@
             last: last
         };
     });
-    // Included from: node_modules/tinymce/js/tinymce/classes/util/Tools.js
+    // Included from: Tools.js
     /**
      * Tools.js
      *
@@ -601,12 +184,11 @@
      * Contributing: http://www.tinymce.com/contributing
      */
     /**
-     * This class contains various utlity functions. These are also exposed
-     * directly on the tinymce namespace.
+     * This class is a stripped down version of the original tinymce.util.Tools class.
      *
      * @class tinymce.util.Tools
      */
-    define('tinymce/util/Tools', ['tinymce/Env', 'tinymce/util/Arr'], function(Env, Arr) {
+    define('tinymce/util/Tools', ['tinymce/util/Arr'], function(Arr) {
         /**
          * Removes whitespace from the beginning and end of a string.
          *
@@ -618,23 +200,6 @@
 
         function trim(str) {
             return null === str || str === undefined ? '' : ('' + str).replace(whiteSpaceRegExp, '');
-        }
-        /**
-         * Checks if a object is of a specific type for example an array.
-         *
-         * @method is
-         * @param {Object} obj Object to check type of.
-         * @param {string} type Optional type to check for.
-         * @return {Boolean} true/false if the object is of the specified type.
-         */
-        function is(obj, type) {
-            if (!type) {
-                return obj !== undefined;
-            }
-            if ('array' == type && Arr.isArray(obj)) {
-                return true;
-            }
-            return typeof obj == type;
         }
         /**
          * Makes a name/object map out of an array with names.
@@ -657,112 +222,6 @@
             }
             return map;
         }
-        /**
-         * Creates a class, subclass or static singleton.
-         * More details on this method can be found in the Wiki.
-         *
-         * @method create
-         * @param {String} s Class name, inheritance and prefix.
-         * @param {Object} p Collection of methods to add to the class.
-         * @param {Object} root Optional root object defaults to the global window object.
-         * @example
-         * // Creates a basic class
-         * tinymce.create('tinymce.somepackage.SomeClass', {
-         *     SomeClass: function() {
-         *         // Class constructor
-         *     },
-         *
-         *     method: function() {
-         *         // Some method
-         *     }
-         * });
-         *
-         * // Creates a basic subclass class
-         * tinymce.create('tinymce.somepackage.SomeSubClass:tinymce.somepackage.SomeClass', {
-         *     SomeSubClass: function() {
-         *         // Class constructor
-         *         this.parent(); // Call parent constructor
-         *     },
-         *
-         *     method: function() {
-         *         // Some method
-         *         this.parent(); // Call parent method
-         *     },
-         *
-         *     'static': {
-         *         staticMethod: function() {
-         *             // Static method
-         *         }
-         *     }
-         * });
-         *
-         * // Creates a singleton/static class
-         * tinymce.create('static tinymce.somepackage.SomeSingletonClass', {
-         *     method: function() {
-         *         // Some method
-         *     }
-         * });
-         */
-        function create(s, p, root) {
-            var sp, ns, cn, scn, c, self = this,
-                de = 0;
-            // Parse : <prefix> <class>:<super class>
-            s = /^((static) )?([\w.]+)(:([\w.]+))?/.exec(s);
-            cn = s[3].match(/(^|\.)(\w+)$/i)[2];
-            // Class name
-            // Create namespace for new class
-            ns = self.createNS(s[3].replace(/\.\w+$/, ''), root);
-            // Class already exists
-            if (ns[cn]) {
-                return;
-            }
-            // Make pure static class
-            if ('static' == s[2]) {
-                ns[cn] = p;
-                this.onCreate && this.onCreate(s[2], s[3], ns[cn]);
-                return;
-            }
-            // Create default constructor
-            if (!p[cn]) {
-                p[cn] = function() {};
-                de = 1;
-            }
-            // Add constructor and methods
-            ns[cn] = p[cn];
-            self.extend(ns[cn].prototype, p);
-            // Extend
-            if (s[5]) {
-                sp = self.resolve(s[5]).prototype;
-                scn = s[5].match(/\.(\w+)$/i)[1];
-                // Class name
-                // Extend constructor
-                c = ns[cn];
-                // Add passthrough constructor
-                ns[cn] = de ? function() {
-                    return sp[scn].apply(this, arguments);
-                } : function() {
-                    this.parent = sp[scn];
-                    return c.apply(this, arguments);
-                };
-                ns[cn].prototype[cn] = ns[cn];
-                // Add super methods
-                self.each(sp, function(f, n) {
-                    ns[cn].prototype[n] = sp[n];
-                });
-                // Add overridden methods
-                self.each(p, function(f, n) {
-                    // Extend methods if needed
-                    sp[n] ? ns[cn].prototype[n] = function() {
-                        this.parent = sp[n];
-                        return f.apply(this, arguments);
-                    } : n != cn && (ns[cn].prototype[n] = f);
-                });
-            }
-            // Add static methods
-            self.each(p['static'], function(f, n) {
-                ns[cn][n] = f;
-            });
-        }
 
         function extend(obj, ext) {
             var i, l, name, value, args = arguments;
@@ -778,79 +237,6 @@
             return obj;
         }
         /**
-         * Executed the specified function for each item in a object tree.
-         *
-         * @method walk
-         * @param {Object} o Object tree to walk though.
-         * @param {function} f Function to call for each item.
-         * @param {String} n Optional name of collection inside the objects to walk for example childNodes.
-         * @param {String} s Optional scope to execute the function in.
-         */
-        function walk(o, f, n, s) {
-            s = s || this;
-            if (o) {
-                n && (o = o[n]);
-                Arr.each(o, function(o, i) {
-                    if (false === f.call(s, o, i, n)) {
-                        return false;
-                    }
-                    walk(o, f, n, s);
-                });
-            }
-        }
-        /**
-         * Creates a namespace on a specific object.
-         *
-         * @method createNS
-         * @param {String} n Namespace to create for example a.b.c.d.
-         * @param {Object} o Optional object to add namespace to, defaults to window.
-         * @return {Object} New namespace object the last item in path.
-         * @example
-         * // Create some namespace
-         * tinymce.createNS('tinymce.somepackage.subpackage');
-         *
-         * // Add a singleton
-         * var tinymce.somepackage.subpackage.SomeSingleton = {
-         *     method: function() {
-         *         // Some method
-         *     }
-         * };
-         */
-        function createNS(n, o) {
-            var i, v;
-            o = o || window;
-            n = n.split('.');
-            for (i = 0; i < n.length; i++) {
-                v = n[i];
-                o[v] || (o[v] = {});
-                o = o[v];
-            }
-            return o;
-        }
-        /**
-         * Resolves a string and returns the object from a specific structure.
-         *
-         * @method resolve
-         * @param {String} n Path to resolve for example a.b.c.d.
-         * @param {Object} o Optional object to search though, defaults to window.
-         * @return {Object} Last object in path or null if it couldn't be resolved.
-         * @example
-         * // Resolve a path into an object reference
-         * var obj = tinymce.resolve('a.b.c.d');
-         */
-        function resolve(n, o) {
-            var i, l;
-            o = o || window;
-            n = n.split('.');
-            for (i = 0, l = n.length; i < l; i++) {
-                o = o[n[i]];
-                if (!o) {
-                    break;
-                }
-            }
-            return o;
-        }
-        /**
          * Splits a string but removes the whitespace before and after each value.
          *
          * @method explode
@@ -861,96 +247,395 @@
          * var arr = tinymce.explode('a, b,   c');
          */
         function explode(s, d) {
-            if (!s || is(s, 'array')) {
+            if (!s || Arr.isArray(s)) {
                 return s;
             }
             return Arr.map(s.split(d || ','), trim);
         }
-
-        function _addCacheSuffix(url) {
-            var cacheSuffix = Env.cacheSuffix;
-            cacheSuffix && (url += (url.indexOf('?') === -1 ? '?' : '&') + cacheSuffix);
-            return url;
-        }
         return {
-            trim: trim,
-            /**
-             * Returns true/false if the object is an array or not.
-             *
-             * @method isArray
-             * @param {Object} obj Object to check.
-             * @return {boolean} true/false state if the object is an array or not.
-             */
-            isArray: Arr.isArray,
-            is: is,
-            /**
-             * Converts the specified object into a real JavaScript array.
-             *
-             * @method toArray
-             * @param {Object} obj Object to convert into array.
-             * @return {Array} Array object based in input.
-             */
-            toArray: Arr.toArray,
             makeMap: makeMap,
-            /**
-             * Performs an iteration of all items in a collection such as an object or array. This method will execure the
-             * callback function for each item in the collection, if the callback returns false the iteration will terminate.
-             * The callback has the following format: cb(value, key_or_index).
-             *
-             * @method each
-             * @param {Object} o Collection to iterate.
-             * @param {function} cb Callback function to execute for each item.
-             * @param {Object} s Optional scope to execute the callback in.
-             * @example
-             * // Iterate an array
-             * tinymce.each([1,2,3], function(v, i) {
-             *     console.debug("Value: " + v + ", Index: " + i);
-             * });
-             *
-             * // Iterate an object
-             * tinymce.each({a: 1, b: 2, c: 3], function(v, k) {
-             *     console.debug("Value: " + v + ", Key: " + k);
-             * });
-             */
             each: Arr.each,
-            /**
-             * Creates a new array by the return value of each iteration function call. This enables you to convert
-             * one array list into another.
-             *
-             * @method map
-             * @param {Array} array Array of items to iterate.
-             * @param {function} callback Function to call for each item. It's return value will be the new value.
-             * @return {Array} Array with new values based on function return values.
-             */
             map: Arr.map,
-            /**
-             * Filters out items from the input array by calling the specified function for each item.
-             * If the function returns false the item will be excluded if it returns true it will be included.
-             *
-             * @method grep
-             * @param {Array} a Array of items to loop though.
-             * @param {function} f Function to call for each item. Include/exclude depends on it's return value.
-             * @return {Array} New array with values imported and filtered based in input.
-             * @example
-             * // Filter out some items, this will return an array with 4 and 5
-             * var items = tinymce.grep([1,2,3,4,5], function(v) {return v > 3;});
-             */
-            grep: Arr.filter,
-            /**
-             * Returns true/false if the object is an array or not.
-             *
-             * @method isArray
-             * @param {Object} obj Object to check.
-             * @return {boolean} true/false state if the object is an array or not.
-             */
             inArray: Arr.indexOf,
             extend: extend,
-            create: create,
-            walk: walk,
-            createNS: createNS,
-            resolve: resolve,
-            explode: explode,
-            _addCacheSuffix: _addCacheSuffix
+            explode: explode
+        };
+    });
+    // Included from: node_modules/tinymce/js/tinymce/classes/html/Entities.js
+    /**
+     * Entities.js
+     *
+     * Released under LGPL License.
+     * Copyright (c) 1999-2015 Ephox Corp. All rights reserved
+     *
+     * License: http://www.tinymce.com/license
+     * Contributing: http://www.tinymce.com/contributing
+     */
+    /**
+     * Entity encoder class.
+     *
+     * @class tinymce.html.Entities
+     * @static
+     * @version 3.4
+     */
+    define('tinymce/html/Entities', ['tinymce/util/Tools'], function(Tools) {
+        var makeMap = Tools.makeMap;
+        var namedEntities, baseEntities, reverseEntities, attrsCharsRegExp = /[&<>\"\u0060\u007E-\uD7FF\uE000-\uFFEF]|[\uD800-\uDBFF][\uDC00-\uDFFF]/g,
+            textCharsRegExp = /[<>&\u007E-\uD7FF\uE000-\uFFEF]|[\uD800-\uDBFF][\uDC00-\uDFFF]/g,
+            rawCharsRegExp = /[<>&\"\']/g,
+            entityRegExp = /&#([a-z0-9]+);?|&([a-z0-9]+);/gi,
+            asciiMap = {
+                128: '€',
+                130: '‚',
+                131: 'ƒ',
+                132: '„',
+                133: '…',
+                134: '†',
+                135: '‡',
+                136: 'ˆ',
+                137: '‰',
+                138: 'Š',
+                139: '‹',
+                140: 'Œ',
+                142: 'Ž',
+                145: '‘',
+                146: '’',
+                147: '“',
+                148: '”',
+                149: '•',
+                150: '–',
+                151: '—',
+                152: '˜',
+                153: '™',
+                154: 'š',
+                155: '›',
+                156: 'œ',
+                158: 'ž',
+                159: 'Ÿ'
+            };
+        // Raw entities
+        baseEntities = {
+            '"': '&quot;',
+            // Needs to be escaped since the YUI compressor would otherwise break the code
+            '\'': '&#39;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '&': '&amp;',
+            '`': '&#96;'
+        };
+        // Reverse lookup table for raw entities
+        reverseEntities = {
+            '&lt;': '<',
+            '&gt;': '>',
+            '&amp;': '&',
+            '&quot;': '"',
+            '&apos;': '\''
+        };
+        // Decodes text by using the browser
+        function nativeDecode(text) {
+            return text;
+        }
+        // Build a two way lookup table for the entities
+        function buildEntitiesLookup(items, radix) {
+            var i, chr, entity, lookup = {};
+            if (items) {
+                items = items.split(',');
+                radix = radix || 10;
+                // Build entities lookup table
+                for (i = 0; i < items.length; i += 2) {
+                    chr = String.fromCharCode(parseInt(items[i], radix));
+                    // Only add non base entities
+                    if (!baseEntities[chr]) {
+                        entity = '&' + items[i + 1] + ';';
+                        lookup[chr] = entity;
+                        lookup[entity] = chr;
+                    }
+                }
+                return lookup;
+            }
+        }
+        // Unpack entities lookup where the numbers are in radix 32 to reduce the size
+        namedEntities = buildEntitiesLookup('50,nbsp,51,iexcl,52,cent,53,pound,54,curren,55,yen,56,brvbar,57,sect,58,uml,59,copy,5a,ordf,5b,laquo,5c,not,5d,shy,5e,reg,5f,macr,5g,deg,5h,plusmn,5i,sup2,5j,sup3,5k,acute,5l,micro,5m,para,5n,middot,5o,cedil,5p,sup1,5q,ordm,5r,raquo,5s,frac14,5t,frac12,5u,frac34,5v,iquest,60,Agrave,61,Aacute,62,Acirc,63,Atilde,64,Auml,65,Aring,66,AElig,67,Ccedil,68,Egrave,69,Eacute,6a,Ecirc,6b,Euml,6c,Igrave,6d,Iacute,6e,Icirc,6f,Iuml,6g,ETH,6h,Ntilde,6i,Ograve,6j,Oacute,6k,Ocirc,6l,Otilde,6m,Ouml,6n,times,6o,Oslash,6p,Ugrave,6q,Uacute,6r,Ucirc,6s,Uuml,6t,Yacute,6u,THORN,6v,szlig,70,agrave,71,aacute,72,acirc,73,atilde,74,auml,75,aring,76,aelig,77,ccedil,78,egrave,79,eacute,7a,ecirc,7b,euml,7c,igrave,7d,iacute,7e,icirc,7f,iuml,7g,eth,7h,ntilde,7i,ograve,7j,oacute,7k,ocirc,7l,otilde,7m,ouml,7n,divide,7o,oslash,7p,ugrave,7q,uacute,7r,ucirc,7s,uuml,7t,yacute,7u,thorn,7v,yuml,ci,fnof,sh,Alpha,si,Beta,sj,Gamma,sk,Delta,sl,Epsilon,sm,Zeta,sn,Eta,so,Theta,sp,Iota,sq,Kappa,sr,Lambda,ss,Mu,st,Nu,su,Xi,sv,Omicron,t0,Pi,t1,Rho,t3,Sigma,t4,Tau,t5,Upsilon,t6,Phi,t7,Chi,t8,Psi,t9,Omega,th,alpha,ti,beta,tj,gamma,tk,delta,tl,epsilon,tm,zeta,tn,eta,to,theta,tp,iota,tq,kappa,tr,lambda,ts,mu,tt,nu,tu,xi,tv,omicron,u0,pi,u1,rho,u2,sigmaf,u3,sigma,u4,tau,u5,upsilon,u6,phi,u7,chi,u8,psi,u9,omega,uh,thetasym,ui,upsih,um,piv,812,bull,816,hellip,81i,prime,81j,Prime,81u,oline,824,frasl,88o,weierp,88h,image,88s,real,892,trade,89l,alefsym,8cg,larr,8ch,uarr,8ci,rarr,8cj,darr,8ck,harr,8dl,crarr,8eg,lArr,8eh,uArr,8ei,rArr,8ej,dArr,8ek,hArr,8g0,forall,8g2,part,8g3,exist,8g5,empty,8g7,nabla,8g8,isin,8g9,notin,8gb,ni,8gf,prod,8gh,sum,8gi,minus,8gn,lowast,8gq,radic,8gt,prop,8gu,infin,8h0,ang,8h7,and,8h8,or,8h9,cap,8ha,cup,8hb,int,8hk,there4,8hs,sim,8i5,cong,8i8,asymp,8j0,ne,8j1,equiv,8j4,le,8j5,ge,8k2,sub,8k3,sup,8k4,nsub,8k6,sube,8k7,supe,8kl,oplus,8kn,otimes,8l5,perp,8m5,sdot,8o8,lceil,8o9,rceil,8oa,lfloor,8ob,rfloor,8p9,lang,8pa,rang,9ea,loz,9j0,spades,9j3,clubs,9j5,hearts,9j6,diams,ai,OElig,aj,oelig,b0,Scaron,b1,scaron,bo,Yuml,m6,circ,ms,tilde,802,ensp,803,emsp,809,thinsp,80c,zwnj,80d,zwj,80e,lrm,80f,rlm,80j,ndash,80k,mdash,80o,lsquo,80p,rsquo,80q,sbquo,80s,ldquo,80t,rdquo,80u,bdquo,810,dagger,811,Dagger,81g,permil,81p,lsaquo,81q,rsaquo,85c,euro', 32);
+        var Entities = {
+            /**
+             * Encodes the specified string using raw entities. This means only the required XML base entities will be encoded.
+             *
+             * @method encodeRaw
+             * @param {String} text Text to encode.
+             * @param {Boolean} attr Optional flag to specify if the text is attribute contents.
+             * @return {String} Entity encoded text.
+             */
+            encodeRaw: function(text, attr) {
+                return text.replace(attr ? attrsCharsRegExp : textCharsRegExp, function(chr) {
+                    return baseEntities[chr] || chr;
+                });
+            },
+            /**
+             * Encoded the specified text with both the attributes and text entities. This function will produce larger text contents
+             * since it doesn't know if the context is within a attribute or text node. This was added for compatibility
+             * and is exposed as the DOMUtils.encode function.
+             *
+             * @method encodeAllRaw
+             * @param {String} text Text to encode.
+             * @return {String} Entity encoded text.
+             */
+            encodeAllRaw: function(text) {
+                return ('' + text).replace(rawCharsRegExp, function(chr) {
+                    return baseEntities[chr] || chr;
+                });
+            },
+            /**
+             * Encodes the specified string using numeric entities. The core entities will be
+             * encoded as named ones but all non lower ascii characters will be encoded into numeric entities.
+             *
+             * @method encodeNumeric
+             * @param {String} text Text to encode.
+             * @param {Boolean} attr Optional flag to specify if the text is attribute contents.
+             * @return {String} Entity encoded text.
+             */
+            encodeNumeric: function(text, attr) {
+                return text.replace(attr ? attrsCharsRegExp : textCharsRegExp, function(chr) {
+                    // Multi byte sequence convert it to a single entity
+                    if (chr.length > 1) {
+                        return '&#' + (1024 * (chr.charCodeAt(0) - 55296) + (chr.charCodeAt(1) - 56320) + 65536) + ';';
+                    }
+                    return baseEntities[chr] || '&#' + chr.charCodeAt(0) + ';';
+                });
+            },
+            /**
+             * Encodes the specified string using named entities. The core entities will be encoded
+             * as named ones but all non lower ascii characters will be encoded into named entities.
+             *
+             * @method encodeNamed
+             * @param {String} text Text to encode.
+             * @param {Boolean} attr Optional flag to specify if the text is attribute contents.
+             * @param {Object} entities Optional parameter with entities to use.
+             * @return {String} Entity encoded text.
+             */
+            encodeNamed: function(text, attr, entities) {
+                entities = entities || namedEntities;
+                return text.replace(attr ? attrsCharsRegExp : textCharsRegExp, function(chr) {
+                    return baseEntities[chr] || entities[chr] || chr;
+                });
+            },
+            /**
+             * Returns an encode function based on the name(s) and it's optional entities.
+             *
+             * @method getEncodeFunc
+             * @param {String} name Comma separated list of encoders for example named,numeric.
+             * @param {String} entities Optional parameter with entities to use instead of the built in set.
+             * @return {function} Encode function to be used.
+             */
+            getEncodeFunc: function(name, entities) {
+                entities = buildEntitiesLookup(entities) || namedEntities;
+
+                function encodeNamedAndNumeric(text, attr) {
+                    return text.replace(attr ? attrsCharsRegExp : textCharsRegExp, function(chr) {
+                        return baseEntities[chr] || entities[chr] || '&#' + chr.charCodeAt(0) + ';' || chr;
+                    });
+                }
+
+                function encodeCustomNamed(text, attr) {
+                    return Entities.encodeNamed(text, attr, entities);
+                }
+                // Replace + with , to be compatible with previous TinyMCE versions
+                name = makeMap(name.replace(/\+/g, ','));
+                // Named and numeric encoder
+                if (name.named && name.numeric) {
+                    return encodeNamedAndNumeric;
+                }
+                // Named encoder
+                if (name.named) {
+                    // Custom names
+                    if (entities) {
+                        return encodeCustomNamed;
+                    }
+                    return Entities.encodeNamed;
+                }
+                // Numeric
+                if (name.numeric) {
+                    return Entities.encodeNumeric;
+                }
+                // Raw encoder
+                return Entities.encodeRaw;
+            },
+            /**
+             * Decodes the specified string, this will replace entities with raw UTF characters.
+             *
+             * @method decode
+             * @param {String} text Text to entity decode.
+             * @return {String} Entity decoded string.
+             */
+            decode: function(text) {
+                return text.replace(entityRegExp, function(all, numeric) {
+                    if (numeric) {
+                        numeric = 'x' === numeric.charAt(0).toLowerCase() ? parseInt(numeric.substr(1), 16) : parseInt(numeric, 10);
+                        // Support upper UTF
+                        if (numeric > 65535) {
+                            numeric -= 65536;
+                            return String.fromCharCode(55296 + (numeric >> 10), 56320 + (1023 & numeric));
+                        }
+                        return asciiMap[numeric] || String.fromCharCode(numeric);
+                    }
+                    return reverseEntities[all] || namedEntities[all] || nativeDecode(all);
+                });
+            }
+        };
+        return Entities;
+    });
+    // Included from: node_modules/tinymce/js/tinymce/classes/html/Writer.js
+    /**
+     * Writer.js
+     *
+     * Released under LGPL License.
+     * Copyright (c) 1999-2015 Ephox Corp. All rights reserved
+     *
+     * License: http://www.tinymce.com/license
+     * Contributing: http://www.tinymce.com/contributing
+     */
+    /**
+     * This class is used to write HTML tags out it can be used with the Serializer or the SaxParser.
+     *
+     * @class tinymce.html.Writer
+     * @example
+     * var writer = new tinymce.html.Writer({indent: true});
+     * var parser = new tinymce.html.SaxParser(writer).parse('<p><br></p>');
+     * console.log(writer.getContent());
+     *
+     * @class tinymce.html.Writer
+     * @version 3.4
+     */
+    define('tinymce/html/Writer', ['tinymce/html/Entities', 'tinymce/util/Tools'], function(Entities, Tools) {
+        var makeMap = Tools.makeMap;
+        /**
+         * Constructs a new Writer instance.
+         *
+         * @constructor
+         * @method Writer
+         * @param {Object} settings Name/value settings object.
+         */
+        return function(settings) {
+            var indent, indentBefore, indentAfter, encode, htmlOutput, html = [];
+            settings = settings || {};
+            indent = settings.indent;
+            indentBefore = makeMap(settings.indent_before || '');
+            indentAfter = makeMap(settings.indent_after || '');
+            encode = Entities.getEncodeFunc(settings.entity_encoding || 'raw', settings.entities);
+            htmlOutput = 'html' == settings.element_format;
+            return {
+                /**
+                 * Writes the a start element such as <p id="a">.
+                 *
+                 * @method start
+                 * @param {String} name Name of the element.
+                 * @param {Array} attrs Optional attribute array or undefined if it hasn't any.
+                 * @param {Boolean} empty Optional empty state if the tag should end like <br />.
+                 */
+                start: function(name, attrs, empty) {
+                    var i, l, attr, value;
+                    if (indent && indentBefore[name] && html.length > 0) {
+                        value = html[html.length - 1];
+                        value.length > 0 && '\n' !== value && html.push('\n');
+                    }
+                    html.push('<', name);
+                    if (attrs) {
+                        for (i = 0, l = attrs.length; i < l; i++) {
+                            attr = attrs[i];
+                            html.push(' ', attr.name, '="', encode(attr.value, true), '"');
+                        }
+                    }
+                    html[html.length] = !empty || htmlOutput ? '>' : ' />';
+                    if (empty && indent && indentAfter[name] && html.length > 0) {
+                        value = html[html.length - 1];
+                        value.length > 0 && '\n' !== value && html.push('\n');
+                    }
+                },
+                /**
+                 * Writes the a end element such as </p>.
+                 *
+                 * @method end
+                 * @param {String} name Name of the element.
+                 */
+                end: function(name) {
+                    var value;
+                    /*if (indent && indentBefore[name] && html.length > 0) {
+					value = html[html.length - 1];
+
+					if (value.length > 0 && value !== '\n')
+						html.push('\n');
+				}*/
+                    html.push('</', name, '>');
+                    if (indent && indentAfter[name] && html.length > 0) {
+                        value = html[html.length - 1];
+                        value.length > 0 && '\n' !== value && html.push('\n');
+                    }
+                },
+                /**
+                 * Writes a text node.
+                 *
+                 * @method text
+                 * @param {String} text String to write out.
+                 * @param {Boolean} raw Optional raw state if true the contents wont get encoded.
+                 */
+                text: function(text, raw) {
+                    text.length > 0 && (html[html.length] = raw ? text : encode(text));
+                },
+                /**
+                 * Writes a cdata node such as <![CDATA[data]]>.
+                 *
+                 * @method cdata
+                 * @param {String} text String to write out inside the cdata.
+                 */
+                cdata: function(text) {
+                    html.push('<![CDATA[', text, ']]>');
+                },
+                /**
+                 * Writes a comment node such as <!-- Comment -->.
+                 *
+                 * @method cdata
+                 * @param {String} text String to write out inside the comment.
+                 */
+                comment: function(text) {
+                    html.push('<!--', text, '-->');
+                },
+                /**
+                 * Writes a PI node such as <?xml attr="value" ?>.
+                 *
+                 * @method pi
+                 * @param {String} name Name of the pi.
+                 * @param {String} text String to write out inside the pi.
+                 */
+                pi: function(name, text) {
+                    text ? html.push('<?', name, ' ', encode(text), '?>') : html.push('<?', name, '?>');
+                    indent && html.push('\n');
+                },
+                /**
+                 * Writes a doctype node such as <!DOCTYPE data>.
+                 *
+                 * @method doctype
+                 * @param {String} text String to write out inside the doctype.
+                 */
+                doctype: function(text) {
+                    html.push('<!DOCTYPE', text, '>', indent ? '\n' : '');
+                },
+                /**
+                 * Resets the internal buffer if one wants to reuse the writer.
+                 *
+                 * @method reset
+                 */
+                reset: function() {
+                    html.length = 0;
+                },
+                /**
+                 * Returns the contents that got serialized.
+                 *
+                 * @method getContent
+                 * @return {String} HTML contents that got written down.
+                 */
+                getContent: function() {
+                    return html.join('').replace(/\n$/, '');
+                }
+            };
         };
     });
     // Included from: node_modules/tinymce/js/tinymce/classes/html/Schema.js
@@ -1771,9 +1456,9 @@
             self.elements = elements;
         };
     });
-    // Included from: node_modules/tinymce/js/tinymce/classes/html/Entities.js
+    // Included from: node_modules/tinymce/js/tinymce/classes/html/Serializer.js
     /**
-     * Entities.js
+     * Serializer.js
      *
      * Released under LGPL License.
      * Copyright (c) 1999-2015 Ephox Corp. All rights reserved
@@ -1782,216 +1467,542 @@
      * Contributing: http://www.tinymce.com/contributing
      */
     /**
-     * Entity encoder class.
+     * This class is used to serialize down the DOM tree into a string using a Writer instance.
      *
-     * @class tinymce.html.Entities
-     * @static
+     *
+     * @example
+     * new tinymce.html.Serializer().serialize(new tinymce.html.DomParser().parse('<p>text</p>'));
+     * @class tinymce.html.Serializer
      * @version 3.4
      */
-    define('tinymce/html/Entities', ['tinymce/util/Tools'], function(Tools) {
-        var makeMap = Tools.makeMap;
-        var namedEntities, baseEntities, reverseEntities, attrsCharsRegExp = /[&<>\"\u0060\u007E-\uD7FF\uE000-\uFFEF]|[\uD800-\uDBFF][\uDC00-\uDFFF]/g,
-            textCharsRegExp = /[<>&\u007E-\uD7FF\uE000-\uFFEF]|[\uD800-\uDBFF][\uDC00-\uDFFF]/g,
-            rawCharsRegExp = /[<>&\"\']/g,
-            entityRegExp = /&#([a-z0-9]+);?|&([a-z0-9]+);/gi,
-            asciiMap = {
-                128: '€',
-                130: '‚',
-                131: 'ƒ',
-                132: '„',
-                133: '…',
-                134: '†',
-                135: '‡',
-                136: 'ˆ',
-                137: '‰',
-                138: 'Š',
-                139: '‹',
-                140: 'Œ',
-                142: 'Ž',
-                145: '‘',
-                146: '’',
-                147: '“',
-                148: '”',
-                149: '•',
-                150: '–',
-                151: '—',
-                152: '˜',
-                153: '™',
-                154: 'š',
-                155: '›',
-                156: 'œ',
-                158: 'ž',
-                159: 'Ÿ'
-            };
-        // Raw entities
-        baseEntities = {
-            '"': '&quot;',
-            // Needs to be escaped since the YUI compressor would otherwise break the code
-            '\'': '&#39;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '&': '&amp;',
-            '`': '&#96;'
-        };
-        // Reverse lookup table for raw entities
-        reverseEntities = {
-            '&lt;': '<',
-            '&gt;': '>',
-            '&amp;': '&',
-            '&quot;': '"',
-            '&apos;': '\''
-        };
-        // Decodes text by using the browser
-        function nativeDecode(text) {
-            return text;
-        }
-        // Build a two way lookup table for the entities
-        function buildEntitiesLookup(items, radix) {
-            var i, chr, entity, lookup = {};
-            if (items) {
-                items = items.split(',');
-                radix = radix || 10;
-                // Build entities lookup table
-                for (i = 0; i < items.length; i += 2) {
-                    chr = String.fromCharCode(parseInt(items[i], radix));
-                    // Only add non base entities
-                    if (!baseEntities[chr]) {
-                        entity = '&' + items[i + 1] + ';';
-                        lookup[chr] = entity;
-                        lookup[entity] = chr;
-                    }
-                }
-                return lookup;
-            }
-        }
-        // Unpack entities lookup where the numbers are in radix 32 to reduce the size
-        namedEntities = buildEntitiesLookup('50,nbsp,51,iexcl,52,cent,53,pound,54,curren,55,yen,56,brvbar,57,sect,58,uml,59,copy,5a,ordf,5b,laquo,5c,not,5d,shy,5e,reg,5f,macr,5g,deg,5h,plusmn,5i,sup2,5j,sup3,5k,acute,5l,micro,5m,para,5n,middot,5o,cedil,5p,sup1,5q,ordm,5r,raquo,5s,frac14,5t,frac12,5u,frac34,5v,iquest,60,Agrave,61,Aacute,62,Acirc,63,Atilde,64,Auml,65,Aring,66,AElig,67,Ccedil,68,Egrave,69,Eacute,6a,Ecirc,6b,Euml,6c,Igrave,6d,Iacute,6e,Icirc,6f,Iuml,6g,ETH,6h,Ntilde,6i,Ograve,6j,Oacute,6k,Ocirc,6l,Otilde,6m,Ouml,6n,times,6o,Oslash,6p,Ugrave,6q,Uacute,6r,Ucirc,6s,Uuml,6t,Yacute,6u,THORN,6v,szlig,70,agrave,71,aacute,72,acirc,73,atilde,74,auml,75,aring,76,aelig,77,ccedil,78,egrave,79,eacute,7a,ecirc,7b,euml,7c,igrave,7d,iacute,7e,icirc,7f,iuml,7g,eth,7h,ntilde,7i,ograve,7j,oacute,7k,ocirc,7l,otilde,7m,ouml,7n,divide,7o,oslash,7p,ugrave,7q,uacute,7r,ucirc,7s,uuml,7t,yacute,7u,thorn,7v,yuml,ci,fnof,sh,Alpha,si,Beta,sj,Gamma,sk,Delta,sl,Epsilon,sm,Zeta,sn,Eta,so,Theta,sp,Iota,sq,Kappa,sr,Lambda,ss,Mu,st,Nu,su,Xi,sv,Omicron,t0,Pi,t1,Rho,t3,Sigma,t4,Tau,t5,Upsilon,t6,Phi,t7,Chi,t8,Psi,t9,Omega,th,alpha,ti,beta,tj,gamma,tk,delta,tl,epsilon,tm,zeta,tn,eta,to,theta,tp,iota,tq,kappa,tr,lambda,ts,mu,tt,nu,tu,xi,tv,omicron,u0,pi,u1,rho,u2,sigmaf,u3,sigma,u4,tau,u5,upsilon,u6,phi,u7,chi,u8,psi,u9,omega,uh,thetasym,ui,upsih,um,piv,812,bull,816,hellip,81i,prime,81j,Prime,81u,oline,824,frasl,88o,weierp,88h,image,88s,real,892,trade,89l,alefsym,8cg,larr,8ch,uarr,8ci,rarr,8cj,darr,8ck,harr,8dl,crarr,8eg,lArr,8eh,uArr,8ei,rArr,8ej,dArr,8ek,hArr,8g0,forall,8g2,part,8g3,exist,8g5,empty,8g7,nabla,8g8,isin,8g9,notin,8gb,ni,8gf,prod,8gh,sum,8gi,minus,8gn,lowast,8gq,radic,8gt,prop,8gu,infin,8h0,ang,8h7,and,8h8,or,8h9,cap,8ha,cup,8hb,int,8hk,there4,8hs,sim,8i5,cong,8i8,asymp,8j0,ne,8j1,equiv,8j4,le,8j5,ge,8k2,sub,8k3,sup,8k4,nsub,8k6,sube,8k7,supe,8kl,oplus,8kn,otimes,8l5,perp,8m5,sdot,8o8,lceil,8o9,rceil,8oa,lfloor,8ob,rfloor,8p9,lang,8pa,rang,9ea,loz,9j0,spades,9j3,clubs,9j5,hearts,9j6,diams,ai,OElig,aj,oelig,b0,Scaron,b1,scaron,bo,Yuml,m6,circ,ms,tilde,802,ensp,803,emsp,809,thinsp,80c,zwnj,80d,zwj,80e,lrm,80f,rlm,80j,ndash,80k,mdash,80o,lsquo,80p,rsquo,80q,sbquo,80s,ldquo,80t,rdquo,80u,bdquo,810,dagger,811,Dagger,81g,permil,81p,lsaquo,81q,rsaquo,85c,euro', 32);
-        var Entities = {
+    define('tinymce/html/Serializer', ['tinymce/html/Writer', 'tinymce/html/Schema'], function(Writer, Schema) {
+        /**
+         * Constructs a new Serializer instance.
+         *
+         * @constructor
+         * @method Serializer
+         * @param {Object} settings Name/value settings object.
+         * @param {tinymce.html.Schema} schema Schema instance to use.
+         */
+        return function(settings, schema) {
+            var self = this,
+                writer = new Writer(settings);
+            settings = settings || {};
+            settings.validate = !('validate' in settings) || settings.validate;
+            self.schema = schema = schema || new Schema();
+            self.writer = writer;
             /**
-             * Encodes the specified string using raw entities. This means only the required XML base entities will be encoded.
+             * Serializes the specified node into a string.
              *
-             * @method encodeRaw
-             * @param {String} text Text to encode.
-             * @param {Boolean} attr Optional flag to specify if the text is attribute contents.
-             * @return {String} Entity encoded text.
+             * @example
+             * new tinymce.html.Serializer().serialize(new tinymce.html.DomParser().parse('<p>text</p>'));
+             * @method serialize
+             * @param {tinymce.html.Node} node Node instance to serialize.
+             * @return {String} String with HTML based on DOM tree.
              */
-            encodeRaw: function(text, attr) {
-                return text.replace(attr ? attrsCharsRegExp : textCharsRegExp, function(chr) {
-                    return baseEntities[chr] || chr;
-                });
-            },
-            /**
-             * Encoded the specified text with both the attributes and text entities. This function will produce larger text contents
-             * since it doesn't know if the context is within a attribute or text node. This was added for compatibility
-             * and is exposed as the DOMUtils.encode function.
-             *
-             * @method encodeAllRaw
-             * @param {String} text Text to encode.
-             * @return {String} Entity encoded text.
-             */
-            encodeAllRaw: function(text) {
-                return ('' + text).replace(rawCharsRegExp, function(chr) {
-                    return baseEntities[chr] || chr;
-                });
-            },
-            /**
-             * Encodes the specified string using numeric entities. The core entities will be
-             * encoded as named ones but all non lower ascii characters will be encoded into numeric entities.
-             *
-             * @method encodeNumeric
-             * @param {String} text Text to encode.
-             * @param {Boolean} attr Optional flag to specify if the text is attribute contents.
-             * @return {String} Entity encoded text.
-             */
-            encodeNumeric: function(text, attr) {
-                return text.replace(attr ? attrsCharsRegExp : textCharsRegExp, function(chr) {
-                    // Multi byte sequence convert it to a single entity
-                    if (chr.length > 1) {
-                        return '&#' + (1024 * (chr.charCodeAt(0) - 55296) + (chr.charCodeAt(1) - 56320) + 65536) + ';';
-                    }
-                    return baseEntities[chr] || '&#' + chr.charCodeAt(0) + ';';
-                });
-            },
-            /**
-             * Encodes the specified string using named entities. The core entities will be encoded
-             * as named ones but all non lower ascii characters will be encoded into named entities.
-             *
-             * @method encodeNamed
-             * @param {String} text Text to encode.
-             * @param {Boolean} attr Optional flag to specify if the text is attribute contents.
-             * @param {Object} entities Optional parameter with entities to use.
-             * @return {String} Entity encoded text.
-             */
-            encodeNamed: function(text, attr, entities) {
-                entities = entities || namedEntities;
-                return text.replace(attr ? attrsCharsRegExp : textCharsRegExp, function(chr) {
-                    return baseEntities[chr] || entities[chr] || chr;
-                });
-            },
-            /**
-             * Returns an encode function based on the name(s) and it's optional entities.
-             *
-             * @method getEncodeFunc
-             * @param {String} name Comma separated list of encoders for example named,numeric.
-             * @param {String} entities Optional parameter with entities to use instead of the built in set.
-             * @return {function} Encode function to be used.
-             */
-            getEncodeFunc: function(name, entities) {
-                entities = buildEntitiesLookup(entities) || namedEntities;
-
-                function encodeNamedAndNumeric(text, attr) {
-                    return text.replace(attr ? attrsCharsRegExp : textCharsRegExp, function(chr) {
-                        return baseEntities[chr] || entities[chr] || '&#' + chr.charCodeAt(0) + ';' || chr;
-                    });
-                }
-
-                function encodeCustomNamed(text, attr) {
-                    return Entities.encodeNamed(text, attr, entities);
-                }
-                // Replace + with , to be compatible with previous TinyMCE versions
-                name = makeMap(name.replace(/\+/g, ','));
-                // Named and numeric encoder
-                if (name.named && name.numeric) {
-                    return encodeNamedAndNumeric;
-                }
-                // Named encoder
-                if (name.named) {
-                    // Custom names
-                    if (entities) {
-                        return encodeCustomNamed;
-                    }
-                    return Entities.encodeNamed;
-                }
-                // Numeric
-                if (name.numeric) {
-                    return Entities.encodeNumeric;
-                }
-                // Raw encoder
-                return Entities.encodeRaw;
-            },
-            /**
-             * Decodes the specified string, this will replace entities with raw UTF characters.
-             *
-             * @method decode
-             * @param {String} text Text to entity decode.
-             * @return {String} Entity decoded string.
-             */
-            decode: function(text) {
-                return text.replace(entityRegExp, function(all, numeric) {
-                    if (numeric) {
-                        numeric = 'x' === numeric.charAt(0).toLowerCase() ? parseInt(numeric.substr(1), 16) : parseInt(numeric, 10);
-                        // Support upper UTF
-                        if (numeric > 65535) {
-                            numeric -= 65536;
-                            return String.fromCharCode(55296 + (numeric >> 10), 56320 + (1023 & numeric));
+            self.serialize = function(node) {
+                var handlers, validate;
+                validate = settings.validate;
+                handlers = {
+                    // #text
+                    3: function(node) {
+                        writer.text(node.value, node.raw);
+                    },
+                    // #comment
+                    8: function(node) {
+                        writer.comment(node.value);
+                    },
+                    // Processing instruction
+                    7: function(node) {
+                        writer.pi(node.name, node.value);
+                    },
+                    // Doctype
+                    10: function(node) {
+                        writer.doctype(node.value);
+                    },
+                    // CDATA
+                    4: function(node) {
+                        writer.cdata(node.value);
+                    },
+                    // Document fragment
+                    11: function(node) {
+                        if (node = node.firstChild) {
+                            do {
+                                walk(node);
+                            } while (node = node.next);
                         }
-                        return asciiMap[numeric] || String.fromCharCode(numeric);
                     }
-                    return reverseEntities[all] || namedEntities[all] || nativeDecode(all);
-                });
+                };
+                writer.reset();
+
+                function walk(node) {
+                    var name, isEmpty, attrs, attrName, attrValue, sortedAttrs, i, l, elementRule, handler = handlers[node.type];
+                    if (handler) {
+                        handler(node);
+                    } else {
+                        name = node.name;
+                        isEmpty = node.shortEnded;
+                        attrs = node.attributes;
+                        // Sort attributes
+                        if (validate && attrs && attrs.length > 1) {
+                            sortedAttrs = [];
+                            sortedAttrs.map = {};
+                            elementRule = schema.getElementRule(node.name);
+                            if (elementRule) {
+                                for (i = 0, l = elementRule.attributesOrder.length; i < l; i++) {
+                                    attrName = elementRule.attributesOrder[i];
+                                    if (attrName in attrs.map) {
+                                        attrValue = attrs.map[attrName];
+                                        sortedAttrs.map[attrName] = attrValue;
+                                        sortedAttrs.push({
+                                            name: attrName,
+                                            value: attrValue
+                                        });
+                                    }
+                                }
+                                for (i = 0, l = attrs.length; i < l; i++) {
+                                    attrName = attrs[i].name;
+                                    if (!(attrName in sortedAttrs.map)) {
+                                        attrValue = attrs.map[attrName];
+                                        sortedAttrs.map[attrName] = attrValue;
+                                        sortedAttrs.push({
+                                            name: attrName,
+                                            value: attrValue
+                                        });
+                                    }
+                                }
+                                attrs = sortedAttrs;
+                            }
+                        }
+                        writer.start(node.name, attrs, isEmpty);
+                        if (!isEmpty) {
+                            if (node = node.firstChild) {
+                                do {
+                                    walk(node);
+                                } while (node = node.next);
+                            }
+                            writer.end(name);
+                        }
+                    }
+                }
+                // Serialize element and treat all non elements as fragments
+                1 != node.type || settings.inner ? handlers[11](node) : walk(node);
+                return writer.getContent();
+            };
+        };
+    });
+    // Included from: node_modules/tinymce/js/tinymce/classes/html/Node.js
+    /**
+     * Node.js
+     *
+     * Released under LGPL License.
+     * Copyright (c) 1999-2015 Ephox Corp. All rights reserved
+     *
+     * License: http://www.tinymce.com/license
+     * Contributing: http://www.tinymce.com/contributing
+     */
+    /**
+     * This class is a minimalistic implementation of a DOM like node used by the DomParser class.
+     *
+     * @example
+     * var node = new tinymce.html.Node('strong', 1);
+     * someRoot.append(node);
+     *
+     * @class tinymce.html.Node
+     * @version 3.4
+     */
+    define('tinymce/html/Node', [], function() {
+        var whiteSpaceRegExp = /^[ \t\r\n]*$/,
+            typeLookup = {
+                '#text': 3,
+                '#comment': 8,
+                '#cdata': 4,
+                '#pi': 7,
+                '#doctype': 10,
+                '#document-fragment': 11
+            };
+        // Walks the tree left/right
+        function walk(node, root_node, prev) {
+            var sibling, parent, startName = prev ? 'lastChild' : 'firstChild',
+                siblingName = prev ? 'prev' : 'next';
+            // Walk into nodes if it has a start
+            if (node[startName]) {
+                return node[startName];
+            }
+            // Return the sibling if it has one
+            if (node !== root_node) {
+                sibling = node[siblingName];
+                if (sibling) {
+                    return sibling;
+                }
+                // Walk up the parents to look for siblings
+                for (parent = node.parent; parent && parent !== root_node; parent = parent.parent) {
+                    sibling = parent[siblingName];
+                    if (sibling) {
+                        return sibling;
+                    }
+                }
+            }
+        }
+        /**
+         * Constructs a new Node instance.
+         *
+         * @constructor
+         * @method Node
+         * @param {String} name Name of the node type.
+         * @param {Number} type Numeric type representing the node.
+         */
+        function Node(name, type) {
+            this.name = name;
+            this.type = type;
+            if (1 === type) {
+                this.attributes = [];
+                this.attributes.map = {};
+            }
+        }
+        Node.prototype = {
+            /**
+             * Replaces the current node with the specified one.
+             *
+             * @example
+             * someNode.replace(someNewNode);
+             *
+             * @method replace
+             * @param {tinymce.html.Node} node Node to replace the current node with.
+             * @return {tinymce.html.Node} The old node that got replaced.
+             */
+            replace: function(node) {
+                var self = this;
+                node.parent && node.remove();
+                self.insert(node, self);
+                self.remove();
+                return self;
+            },
+            /**
+             * Gets/sets or removes an attribute by name.
+             *
+             * @example
+             * someNode.attr("name", "value"); // Sets an attribute
+             * console.log(someNode.attr("name")); // Gets an attribute
+             * someNode.attr("name", null); // Removes an attribute
+             *
+             * @method attr
+             * @param {String} name Attribute name to set or get.
+             * @param {String} value Optional value to set.
+             * @return {String/tinymce.html.Node} String or undefined on a get operation or the current node on a set operation.
+             */
+            attr: function(name, value) {
+                var attrs, i, self = this;
+                if ('string' !== typeof name) {
+                    for (i in name) {
+                        self.attr(i, name[i]);
+                    }
+                    return self;
+                }
+                if (attrs = self.attributes) {
+                    if (value !== undefined) {
+                        // Remove attribute
+                        if (null === value) {
+                            if (name in attrs.map) {
+                                delete attrs.map[name];
+                                i = attrs.length;
+                                while (i--) {
+                                    if (attrs[i].name === name) {
+                                        attrs = attrs.splice(i, 1);
+                                        return self;
+                                    }
+                                }
+                            }
+                            return self;
+                        }
+                        // Set attribute
+                        if (name in attrs.map) {
+                            // Set attribute
+                            i = attrs.length;
+                            while (i--) {
+                                if (attrs[i].name === name) {
+                                    attrs[i].value = value;
+                                    break;
+                                }
+                            }
+                        } else {
+                            attrs.push({
+                                name: name,
+                                value: value
+                            });
+                        }
+                        attrs.map[name] = value;
+                        return self;
+                    }
+                    return attrs.map[name];
+                }
+            },
+            /**
+             * Does a shallow clones the node into a new node. It will also exclude id attributes since
+             * there should only be one id per document.
+             *
+             * @example
+             * var clonedNode = node.clone();
+             *
+             * @method clone
+             * @return {tinymce.html.Node} New copy of the original node.
+             */
+            clone: function() {
+                var i, l, selfAttrs, selfAttr, cloneAttrs, self = this,
+                    clone = new Node(self.name, self.type);
+                // Clone element attributes
+                if (selfAttrs = self.attributes) {
+                    cloneAttrs = [];
+                    cloneAttrs.map = {};
+                    for (i = 0, l = selfAttrs.length; i < l; i++) {
+                        selfAttr = selfAttrs[i];
+                        // Clone everything except id
+                        if ('id' !== selfAttr.name) {
+                            cloneAttrs[cloneAttrs.length] = {
+                                name: selfAttr.name,
+                                value: selfAttr.value
+                            };
+                            cloneAttrs.map[selfAttr.name] = selfAttr.value;
+                        }
+                    }
+                    clone.attributes = cloneAttrs;
+                }
+                clone.value = self.value;
+                clone.shortEnded = self.shortEnded;
+                return clone;
+            },
+            /**
+             * Wraps the node in in another node.
+             *
+             * @example
+             * node.wrap(wrapperNode);
+             *
+             * @method wrap
+             */
+            wrap: function(wrapper) {
+                var self = this;
+                self.parent.insert(wrapper, self);
+                wrapper.append(self);
+                return self;
+            },
+            /**
+             * Unwraps the node in other words it removes the node but keeps the children.
+             *
+             * @example
+             * node.unwrap();
+             *
+             * @method unwrap
+             */
+            unwrap: function() {
+                var node, next, self = this;
+                for (node = self.firstChild; node;) {
+                    next = node.next;
+                    self.insert(node, self, true);
+                    node = next;
+                }
+                self.remove();
+            },
+            /**
+             * Removes the node from it's parent.
+             *
+             * @example
+             * node.remove();
+             *
+             * @method remove
+             * @return {tinymce.html.Node} Current node that got removed.
+             */
+            remove: function() {
+                var self = this,
+                    parent = self.parent,
+                    next = self.next,
+                    prev = self.prev;
+                if (parent) {
+                    if (parent.firstChild === self) {
+                        parent.firstChild = next;
+                        next && (next.prev = null);
+                    } else {
+                        prev.next = next;
+                    }
+                    if (parent.lastChild === self) {
+                        parent.lastChild = prev;
+                        prev && (prev.next = null);
+                    } else {
+                        next.prev = prev;
+                    }
+                    self.parent = self.next = self.prev = null;
+                }
+                return self;
+            },
+            /**
+             * Appends a new node as a child of the current node.
+             *
+             * @example
+             * node.append(someNode);
+             *
+             * @method append
+             * @param {tinymce.html.Node} node Node to append as a child of the current one.
+             * @return {tinymce.html.Node} The node that got appended.
+             */
+            append: function(node) {
+                var last, self = this;
+                node.parent && node.remove();
+                last = self.lastChild;
+                if (last) {
+                    last.next = node;
+                    node.prev = last;
+                    self.lastChild = node;
+                } else {
+                    self.lastChild = self.firstChild = node;
+                }
+                node.parent = self;
+                return node;
+            },
+            /**
+             * Inserts a node at a specific position as a child of the current node.
+             *
+             * @example
+             * parentNode.insert(newChildNode, oldChildNode);
+             *
+             * @method insert
+             * @param {tinymce.html.Node} node Node to insert as a child of the current node.
+             * @param {tinymce.html.Node} ref_node Reference node to set node before/after.
+             * @param {Boolean} before Optional state to insert the node before the reference node.
+             * @return {tinymce.html.Node} The node that got inserted.
+             */
+            insert: function(node, ref_node, before) {
+                var parent;
+                node.parent && node.remove();
+                parent = ref_node.parent || this;
+                if (before) {
+                    ref_node === parent.firstChild ? parent.firstChild = node : ref_node.prev.next = node;
+                    node.prev = ref_node.prev;
+                    node.next = ref_node;
+                    ref_node.prev = node;
+                } else {
+                    ref_node === parent.lastChild ? parent.lastChild = node : ref_node.next.prev = node;
+                    node.next = ref_node.next;
+                    node.prev = ref_node;
+                    ref_node.next = node;
+                }
+                node.parent = parent;
+                return node;
+            },
+            /**
+             * Get all children by name.
+             *
+             * @method getAll
+             * @param {String} name Name of the child nodes to collect.
+             * @return {Array} Array with child nodes matchin the specified name.
+             */
+            getAll: function(name) {
+                var node, self = this,
+                    collection = [];
+                for (node = self.firstChild; node; node = walk(node, self)) {
+                    node.name === name && collection.push(node);
+                }
+                return collection;
+            },
+            /**
+             * Removes all children of the current node.
+             *
+             * @method empty
+             * @return {tinymce.html.Node} The current node that got cleared.
+             */
+            empty: function() {
+                var nodes, i, node, self = this;
+                // Remove all children
+                if (self.firstChild) {
+                    nodes = [];
+                    // Collect the children
+                    for (node = self.firstChild; node; node = walk(node, self)) {
+                        nodes.push(node);
+                    }
+                    // Remove the children
+                    i = nodes.length;
+                    while (i--) {
+                        node = nodes[i];
+                        node.parent = node.firstChild = node.lastChild = node.next = node.prev = null;
+                    }
+                }
+                self.firstChild = self.lastChild = null;
+                return self;
+            },
+            /**
+             * Returns true/false if the node is to be considered empty or not.
+             *
+             * @example
+             * node.isEmpty({img: true});
+             * @method isEmpty
+             * @param {Object} elements Name/value object with elements that are automatically treated as non empty elements.
+             * @return {Boolean} true/false if the node is empty or not.
+             */
+            isEmpty: function(elements) {
+                var i, name, self = this,
+                    node = self.firstChild;
+                if (node) {
+                    do {
+                        if (1 === node.type) {
+                            // Ignore bogus elements
+                            if (node.attributes.map['data-mce-bogus']) {
+                                continue;
+                            }
+                            // Keep empty elements like <img />
+                            if (elements[node.name]) {
+                                return false;
+                            }
+                            // Keep bookmark nodes and name attribute like <a name="1"></a>
+                            i = node.attributes.length;
+                            while (i--) {
+                                name = node.attributes[i].name;
+                                if ('name' === name || 0 === name.indexOf('data-mce-bookmark')) {
+                                    return false;
+                                }
+                            }
+                        }
+                        // Keep comments
+                        if (8 === node.type) {
+                            return false;
+                        }
+                        // Keep non whitespace text nodes
+                        if (3 === node.type && !whiteSpaceRegExp.test(node.value)) {
+                            return false;
+                        }
+                    } while (node = walk(node, self));
+                }
+                return true;
+            },
+            /**
+             * Walks to the next or previous node and returns that node or null if it wasn't found.
+             *
+             * @method walk
+             * @param {Boolean} prev Optional previous node state defaults to false.
+             * @return {tinymce.html.Node} Node that is next to or previous of the current node.
+             */
+            walk: function(prev) {
+                return walk(this, null, prev);
             }
         };
-        return Entities;
+        /**
+         * Creates a node of a specific type.
+         *
+         * @static
+         * @method create
+         * @param {String} name Name of the node type to create for example "b" or "#text".
+         * @param {Object} attrs Name/value collection of attributes that will be applied to elements.
+         */
+        Node.create = function(name, attrs) {
+            var node, attrName;
+            // Create node
+            node = new Node(name, typeLookup[name] || 1);
+            // Add attributes if needed
+            if (attrs) {
+                for (attrName in attrs) {
+                    node.attr(attrName, attrs[attrName]);
+                }
+            }
+            return node;
+        };
+        return Node;
     });
     // Included from: node_modules/tinymce/js/tinymce/classes/html/SaxParser.js
     /**
@@ -2963,296 +2974,6 @@
             });
         };
     });
-    // Included from: node_modules/tinymce/js/tinymce/classes/html/Writer.js
-    /**
-     * Writer.js
-     *
-     * Released under LGPL License.
-     * Copyright (c) 1999-2015 Ephox Corp. All rights reserved
-     *
-     * License: http://www.tinymce.com/license
-     * Contributing: http://www.tinymce.com/contributing
-     */
-    /**
-     * This class is used to write HTML tags out it can be used with the Serializer or the SaxParser.
-     *
-     * @class tinymce.html.Writer
-     * @example
-     * var writer = new tinymce.html.Writer({indent: true});
-     * var parser = new tinymce.html.SaxParser(writer).parse('<p><br></p>');
-     * console.log(writer.getContent());
-     *
-     * @class tinymce.html.Writer
-     * @version 3.4
-     */
-    define('tinymce/html/Writer', ['tinymce/html/Entities', 'tinymce/util/Tools'], function(Entities, Tools) {
-        var makeMap = Tools.makeMap;
-        /**
-         * Constructs a new Writer instance.
-         *
-         * @constructor
-         * @method Writer
-         * @param {Object} settings Name/value settings object.
-         */
-        return function(settings) {
-            var indent, indentBefore, indentAfter, encode, htmlOutput, html = [];
-            settings = settings || {};
-            indent = settings.indent;
-            indentBefore = makeMap(settings.indent_before || '');
-            indentAfter = makeMap(settings.indent_after || '');
-            encode = Entities.getEncodeFunc(settings.entity_encoding || 'raw', settings.entities);
-            htmlOutput = 'html' == settings.element_format;
-            return {
-                /**
-                 * Writes the a start element such as <p id="a">.
-                 *
-                 * @method start
-                 * @param {String} name Name of the element.
-                 * @param {Array} attrs Optional attribute array or undefined if it hasn't any.
-                 * @param {Boolean} empty Optional empty state if the tag should end like <br />.
-                 */
-                start: function(name, attrs, empty) {
-                    var i, l, attr, value;
-                    if (indent && indentBefore[name] && html.length > 0) {
-                        value = html[html.length - 1];
-                        value.length > 0 && '\n' !== value && html.push('\n');
-                    }
-                    html.push('<', name);
-                    if (attrs) {
-                        for (i = 0, l = attrs.length; i < l; i++) {
-                            attr = attrs[i];
-                            html.push(' ', attr.name, '="', encode(attr.value, true), '"');
-                        }
-                    }
-                    html[html.length] = !empty || htmlOutput ? '>' : ' />';
-                    if (empty && indent && indentAfter[name] && html.length > 0) {
-                        value = html[html.length - 1];
-                        value.length > 0 && '\n' !== value && html.push('\n');
-                    }
-                },
-                /**
-                 * Writes the a end element such as </p>.
-                 *
-                 * @method end
-                 * @param {String} name Name of the element.
-                 */
-                end: function(name) {
-                    var value;
-                    /*if (indent && indentBefore[name] && html.length > 0) {
-					value = html[html.length - 1];
-
-					if (value.length > 0 && value !== '\n')
-						html.push('\n');
-				}*/
-                    html.push('</', name, '>');
-                    if (indent && indentAfter[name] && html.length > 0) {
-                        value = html[html.length - 1];
-                        value.length > 0 && '\n' !== value && html.push('\n');
-                    }
-                },
-                /**
-                 * Writes a text node.
-                 *
-                 * @method text
-                 * @param {String} text String to write out.
-                 * @param {Boolean} raw Optional raw state if true the contents wont get encoded.
-                 */
-                text: function(text, raw) {
-                    text.length > 0 && (html[html.length] = raw ? text : encode(text));
-                },
-                /**
-                 * Writes a cdata node such as <![CDATA[data]]>.
-                 *
-                 * @method cdata
-                 * @param {String} text String to write out inside the cdata.
-                 */
-                cdata: function(text) {
-                    html.push('<![CDATA[', text, ']]>');
-                },
-                /**
-                 * Writes a comment node such as <!-- Comment -->.
-                 *
-                 * @method cdata
-                 * @param {String} text String to write out inside the comment.
-                 */
-                comment: function(text) {
-                    html.push('<!--', text, '-->');
-                },
-                /**
-                 * Writes a PI node such as <?xml attr="value" ?>.
-                 *
-                 * @method pi
-                 * @param {String} name Name of the pi.
-                 * @param {String} text String to write out inside the pi.
-                 */
-                pi: function(name, text) {
-                    text ? html.push('<?', name, ' ', encode(text), '?>') : html.push('<?', name, '?>');
-                    indent && html.push('\n');
-                },
-                /**
-                 * Writes a doctype node such as <!DOCTYPE data>.
-                 *
-                 * @method doctype
-                 * @param {String} text String to write out inside the doctype.
-                 */
-                doctype: function(text) {
-                    html.push('<!DOCTYPE', text, '>', indent ? '\n' : '');
-                },
-                /**
-                 * Resets the internal buffer if one wants to reuse the writer.
-                 *
-                 * @method reset
-                 */
-                reset: function() {
-                    html.length = 0;
-                },
-                /**
-                 * Returns the contents that got serialized.
-                 *
-                 * @method getContent
-                 * @return {String} HTML contents that got written down.
-                 */
-                getContent: function() {
-                    return html.join('').replace(/\n$/, '');
-                }
-            };
-        };
-    });
-    // Included from: node_modules/tinymce/js/tinymce/classes/html/Serializer.js
-    /**
-     * Serializer.js
-     *
-     * Released under LGPL License.
-     * Copyright (c) 1999-2015 Ephox Corp. All rights reserved
-     *
-     * License: http://www.tinymce.com/license
-     * Contributing: http://www.tinymce.com/contributing
-     */
-    /**
-     * This class is used to serialize down the DOM tree into a string using a Writer instance.
-     *
-     *
-     * @example
-     * new tinymce.html.Serializer().serialize(new tinymce.html.DomParser().parse('<p>text</p>'));
-     * @class tinymce.html.Serializer
-     * @version 3.4
-     */
-    define('tinymce/html/Serializer', ['tinymce/html/Writer', 'tinymce/html/Schema'], function(Writer, Schema) {
-        /**
-         * Constructs a new Serializer instance.
-         *
-         * @constructor
-         * @method Serializer
-         * @param {Object} settings Name/value settings object.
-         * @param {tinymce.html.Schema} schema Schema instance to use.
-         */
-        return function(settings, schema) {
-            var self = this,
-                writer = new Writer(settings);
-            settings = settings || {};
-            settings.validate = !('validate' in settings) || settings.validate;
-            self.schema = schema = schema || new Schema();
-            self.writer = writer;
-            /**
-             * Serializes the specified node into a string.
-             *
-             * @example
-             * new tinymce.html.Serializer().serialize(new tinymce.html.DomParser().parse('<p>text</p>'));
-             * @method serialize
-             * @param {tinymce.html.Node} node Node instance to serialize.
-             * @return {String} String with HTML based on DOM tree.
-             */
-            self.serialize = function(node) {
-                var handlers, validate;
-                validate = settings.validate;
-                handlers = {
-                    // #text
-                    3: function(node) {
-                        writer.text(node.value, node.raw);
-                    },
-                    // #comment
-                    8: function(node) {
-                        writer.comment(node.value);
-                    },
-                    // Processing instruction
-                    7: function(node) {
-                        writer.pi(node.name, node.value);
-                    },
-                    // Doctype
-                    10: function(node) {
-                        writer.doctype(node.value);
-                    },
-                    // CDATA
-                    4: function(node) {
-                        writer.cdata(node.value);
-                    },
-                    // Document fragment
-                    11: function(node) {
-                        if (node = node.firstChild) {
-                            do {
-                                walk(node);
-                            } while (node = node.next);
-                        }
-                    }
-                };
-                writer.reset();
-
-                function walk(node) {
-                    var name, isEmpty, attrs, attrName, attrValue, sortedAttrs, i, l, elementRule, handler = handlers[node.type];
-                    if (handler) {
-                        handler(node);
-                    } else {
-                        name = node.name;
-                        isEmpty = node.shortEnded;
-                        attrs = node.attributes;
-                        // Sort attributes
-                        if (validate && attrs && attrs.length > 1) {
-                            sortedAttrs = [];
-                            sortedAttrs.map = {};
-                            elementRule = schema.getElementRule(node.name);
-                            if (elementRule) {
-                                for (i = 0, l = elementRule.attributesOrder.length; i < l; i++) {
-                                    attrName = elementRule.attributesOrder[i];
-                                    if (attrName in attrs.map) {
-                                        attrValue = attrs.map[attrName];
-                                        sortedAttrs.map[attrName] = attrValue;
-                                        sortedAttrs.push({
-                                            name: attrName,
-                                            value: attrValue
-                                        });
-                                    }
-                                }
-                                for (i = 0, l = attrs.length; i < l; i++) {
-                                    attrName = attrs[i].name;
-                                    if (!(attrName in sortedAttrs.map)) {
-                                        attrValue = attrs.map[attrName];
-                                        sortedAttrs.map[attrName] = attrValue;
-                                        sortedAttrs.push({
-                                            name: attrName,
-                                            value: attrValue
-                                        });
-                                    }
-                                }
-                                attrs = sortedAttrs;
-                            }
-                        }
-                        writer.start(node.name, attrs, isEmpty);
-                        if (!isEmpty) {
-                            if (node = node.firstChild) {
-                                do {
-                                    walk(node);
-                                } while (node = node.next);
-                            }
-                            writer.end(name);
-                        }
-                    }
-                }
-                // Serialize element and treat all non elements as fragments
-                1 != node.type || settings.inner ? handlers[11](node) : walk(node);
-                return writer.getContent();
-            };
-        };
-    });
     // Included from: node_modules/tinymce/js/tinymce/classes/html/Styles.js
     /**
      * Styles.js
@@ -3283,7 +3004,7 @@
      */
     define('tinymce/html/Styles', [], function() {
         return function(settings, schema) {
-            var undef, i, encodingItems, validStyles, invalidStyles, rgbRegExp = /rgb\s*\(\s*([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)\s*\)/gi,
+            var i, encodingItems, validStyles, invalidStyles, rgbRegExp = /rgb\s*\(\s*([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)\s*\)/gi,
                 urlOrStrRegExp = /(?:url(?:(?:\(\s*\"([^\"]+)\"\s*\))|(?:\(\s*\'([^\']+)\'\s*\))|(?:\(\s*([^)\s]+)\s*\))))|(?:\'([^\']+)\')|(?:\"([^\"]+)\")/gi,
                 styleRegExp = /\s*([^:]+):\s*([^;]+);?/g,
                 trimRightRegExp = /\s+$/,
@@ -3504,7 +3225,7 @@
                             for (i = 0, l = styleList.length; i < l; i++) {
                                 name = styleList[i];
                                 value = styles[name];
-                                value !== undef && value.length > 0 && (css += (css.length > 0 ? ' ' : '') + name + ': ' + value + ';');
+                                value !== undefined && value.length > 0 && (css += (css.length > 0 ? ' ' : '') + name + ': ' + value + ';');
                             }
                         }
                     }
@@ -3530,7 +3251,7 @@
                         // Output the styles in the order they are inside the object
                         for (name in styles) {
                             value = styles[name];
-                            value !== undef && value.length > 0 && (invalidStyles && !isValid(name, elementName) || (css += (css.length > 0 ? ' ' : '') + name + ': ' + value + ';'));
+                            value !== undefined && value.length > 0 && (invalidStyles && !isValid(name, elementName) || (css += (css.length > 0 ? ' ' : '') + name + ': ' + value + ';'));
                         }
                     }
                     return css;
@@ -3569,7 +3290,7 @@
             return instance;
         };
     });
-    expose(['tinymce/html/Node', 'tinymce/Env', 'tinymce/util/Tools', 'tinymce/html/Schema', 'tinymce/html/Entities', 'tinymce/html/SaxParser', 'tinymce/html/DomParser', 'tinymce/html/Writer', 'tinymce/html/Serializer', 'tinymce/html/Styles', 'tinymce/html/Parser']);
+    expose(['tinymce/util/Tools', 'tinymce/html/Entities', 'tinymce/html/Writer', 'tinymce/html/Schema', 'tinymce/html/Serializer', 'tinymce/html/Node', 'tinymce/html/SaxParser', 'tinymce/html/DomParser', 'tinymce/html/Styles', 'tinymce/html/Parser']);
 })(this);
 
 module.exports = exports.tinymce;

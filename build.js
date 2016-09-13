@@ -12,7 +12,7 @@ var mainLibFile = 'tinymce.html.js';
 
 amdlc.compile({
     moduleOverrides: {
-        'tinymce/Env': 'Env.stub.js'
+        'tinymce/util/Tools': 'Tools.js'
     },
     version: packageData.version,
     releaseDate: packageData.date,
@@ -21,7 +21,6 @@ amdlc.compile({
     outputSource: mainLibFile,
     expose: 'public',
     from: [
-        'html/DomParser.js',
         'html/Serializer.js',
         '../../../../../Parser.js'
     ]
@@ -31,6 +30,7 @@ var code = fs.readFileSync(mainLibFile, 'utf8');
 code = code.replace('nativeDecode(text) {', 'nativeDecode(text) { return text;');
 code = code.replace(/throw .+?module definition/g, '//$&');
 code = code.replace('exports.AMDLC_TESTS', 'false');
+code = code.replace(/== undef\b/g, '== undefined');
 code = code.replace(/\/\*(jshint|eslint|globals) .+?\*\//g, '');
 code += '\nmodule.exports = exports.tinymce;';
 code = removeDeadCode(code);
