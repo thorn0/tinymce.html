@@ -1,4 +1,4 @@
-// 4.4.3 (2016-09-01)
+// 4.5.2 (2017-01-04)
 /**
  * Compiled inline version. (Library mode)
  */
@@ -253,6 +253,7 @@
             return Arr.map(s.split(d || ','), trim);
         }
         return {
+            trim: trim,
             makeMap: makeMap,
             each: Arr.each,
             map: Arr.map,
@@ -672,6 +673,7 @@
             inArray = Tools.inArray;
 
         function split(items, delim) {
+            items = Tools.trim(items);
             return items ? items.split(delim || ' ') : [];
         }
         /**
@@ -686,7 +688,7 @@
             var phrasingContent, flowContent, html4BlockContent, html4PhrasingContent;
 
             function add(name, attributes, children) {
-                var ni, i, attributesOrder, args = arguments;
+                var ni, attributesOrder, element;
 
                 function arrayToMap(array, obj) {
                     var i, l, map = {};
@@ -698,20 +700,16 @@
                 children = children || [];
                 attributes = attributes || '';
                 'string' === typeof children && (children = split(children));
-                // Split string children
-                for (i = 3; i < args.length; i++) {
-                    'string' === typeof args[i] && (args[i] = split(args[i]));
-                    children.push.apply(children, args[i]);
-                }
                 name = split(name);
                 ni = name.length;
                 while (ni--) {
-                    attributesOrder = [].concat(globalAttributes, split(attributes));
-                    schema[name[ni]] = {
+                    attributesOrder = split([globalAttributes, attributes].join(' '));
+                    element = {
                         attributes: arrayToMap(attributesOrder),
                         attributesOrder: attributesOrder,
                         children: arrayToMap(children, dummyObj)
                     };
+                    schema[name[ni]] = element;
                 }
             }
 
@@ -733,43 +731,43 @@
                 return mapCache[type];
             }
             // Attributes present on all elements
-            globalAttributes = split('id accesskey class dir lang style tabindex title');
+            globalAttributes = 'id accesskey class dir lang style tabindex title';
             // Event attributes can be opt-in/opt-out
             /*eventAttributes = split("onabort onblur oncancel oncanplay oncanplaythrough onchange onclick onclose oncontextmenu oncuechange " +
-				"ondblclick ondrag ondragend ondragenter ondragleave ondragover ondragstart ondrop ondurationchange onemptied onended " +
-				"onerror onfocus oninput oninvalid onkeydown onkeypress onkeyup onload onloadeddata onloadedmetadata onloadstart " +
-				"onmousedown onmousemove onmouseout onmouseover onmouseup onmousewheel onpause onplay onplaying onprogress onratechange " +
-				"onreset onscroll onseeked onseeking onseeking onselect onshow onstalled onsubmit onsuspend ontimeupdate onvolumechange " +
-				"onwaiting"
-		);*/
+		 "ondblclick ondrag ondragend ondragenter ondragleave ondragover ondragstart ondrop ondurationchange onemptied onended " +
+		 "onerror onfocus oninput oninvalid onkeydown onkeypress onkeyup onload onloadeddata onloadedmetadata onloadstart " +
+		 "onmousedown onmousemove onmouseout onmouseover onmouseup onmousewheel onpause onplay onplaying onprogress onratechange " +
+		 "onreset onscroll onseeked onseeking onseeking onselect onshow onstalled onsubmit onsuspend ontimeupdate onvolumechange " +
+		 "onwaiting"
+		 );*/
             // Block content elements
-            blockContent = split('address blockquote div dl fieldset form h1 h2 h3 h4 h5 h6 hr menu ol p pre table ul');
+            blockContent = 'address blockquote div dl fieldset form h1 h2 h3 h4 h5 h6 hr menu ol p pre table ul';
             // Phrasing content elements from the HTML5 spec (inline)
-            phrasingContent = split('a abbr b bdo br button cite code del dfn em embed i iframe img input ins kbd label map noscript object q s samp script select small span strong sub sup textarea u var #text #comment');
+            phrasingContent = 'a abbr b bdo br button cite code del dfn em embed i iframe img input ins kbd label map noscript object q s samp script select small span strong sub sup textarea u var #text #comment';
             // Add HTML5 items to globalAttributes, blockContent, phrasingContent
             if ('html4' != type) {
-                globalAttributes.push.apply(globalAttributes, split('contenteditable contextmenu draggable dropzone hidden spellcheck translate'));
-                blockContent.push.apply(blockContent, split('article aside details dialog figure header footer hgroup section nav'));
-                phrasingContent.push.apply(phrasingContent, split('audio canvas command datalist mark meter output picture progress time wbr video ruby bdi keygen'));
+                globalAttributes += ' contenteditable contextmenu draggable dropzone hidden spellcheck translate';
+                blockContent += ' article aside details dialog figure header footer hgroup section nav';
+                phrasingContent += ' audio canvas command datalist mark meter output picture progress time wbr video ruby bdi keygen';
             }
             // Add HTML4 elements unless it's html5-strict
             if ('html5-strict' != type) {
-                globalAttributes.push('xml:lang');
-                html4PhrasingContent = split('acronym applet basefont big font strike tt');
-                phrasingContent.push.apply(phrasingContent, html4PhrasingContent);
-                each(html4PhrasingContent, function(name) {
+                globalAttributes += ' xml:lang';
+                html4PhrasingContent = 'acronym applet basefont big font strike tt';
+                phrasingContent = [phrasingContent, html4PhrasingContent].join(' ');
+                each(split(html4PhrasingContent), function(name) {
                     add(name, '', phrasingContent);
                 });
-                html4BlockContent = split('center dir isindex noframes');
-                blockContent.push.apply(blockContent, html4BlockContent);
+                html4BlockContent = 'center dir isindex noframes';
+                blockContent = [blockContent, html4BlockContent].join(' ');
                 // Flow content elements from the HTML5 spec (block+inline)
-                flowContent = [].concat(blockContent, phrasingContent);
-                each(html4BlockContent, function(name) {
+                flowContent = [blockContent, phrasingContent].join(' ');
+                each(split(html4BlockContent), function(name) {
                     add(name, '', flowContent);
                 });
             }
             // Flow content elements from the HTML5 spec (block+inline)
-            flowContent = flowContent || [].concat(blockContent, phrasingContent);
+            flowContent = flowContent || [blockContent, phrasingContent].join(' ');
             // HTML4 base schema TODO: Move HTML5 specific attributes to HTML5 specific if statement
             // Schema items <element name>, <specific attributes>, <children ..>
             add('html', 'manifest', 'head body');
@@ -794,9 +792,9 @@
             add('img', 'src sizes srcset alt usemap ismap width height');
             add('iframe', 'src name width height', flowContent);
             add('embed', 'src type width height');
-            add('object', 'data type typemustmatch name usemap form width height', flowContent, 'param');
+            add('object', 'data type typemustmatch name usemap form width height', [flowContent, 'param'].join(' '));
             add('param', 'name value');
-            add('map', 'name', flowContent, 'area');
+            add('map', 'name', [flowContent, 'area'].join(' '));
             add('area', 'alt coords shape href target rel media hreflang type');
             add('table', 'border', 'caption colgroup thead tfoot tbody tr' + ('html4' == type ? ' col' : ''));
             add('colgroup', 'span', 'col');
@@ -806,7 +804,7 @@
             add('td', 'colspan rowspan headers', flowContent);
             add('th', 'colspan rowspan headers scope abbr', flowContent);
             add('form', 'accept-charset action autocomplete enctype method name novalidate target', flowContent);
-            add('fieldset', 'disabled form name', flowContent, 'legend');
+            add('fieldset', 'disabled form name', [flowContent, 'legend'].join(' '));
             add('label', 'form for', phrasingContent);
             add('input', 'accept alt autocomplete checked dirname disabled form formaction formenctype formmethod formnovalidate formtarget height list max maxlength min multiple name pattern readonly required size src step type value width');
             add('button', 'disabled form formaction formenctype formmethod formnovalidate formtarget name type value', 'html4' == type ? flowContent : phrasingContent);
@@ -814,31 +812,31 @@
             add('optgroup', 'disabled label', 'option');
             add('option', 'disabled label selected value');
             add('textarea', 'cols dirname disabled form maxlength name readonly required rows wrap');
-            add('menu', 'type label', flowContent, 'li');
+            add('menu', 'type label', [flowContent, 'li'].join(' '));
             add('noscript', '', flowContent);
             // Extend with HTML5 elements
             if ('html4' != type) {
                 add('wbr');
-                add('ruby', '', phrasingContent, 'rt rp');
+                add('ruby', '', [phrasingContent, 'rt rp'].join(' '));
                 add('figcaption', '', flowContent);
                 add('mark rt rp summary bdi', '', phrasingContent);
                 add('canvas', 'width height', flowContent);
-                add('video', 'src crossorigin poster preload autoplay mediagroup loop muted controls width height buffered', flowContent, 'track source');
-                add('audio', 'src crossorigin preload autoplay mediagroup loop muted controls buffered volume', flowContent, 'track source');
+                add('video', 'src crossorigin poster preload autoplay mediagroup loop muted controls width height buffered', [flowContent, 'track source'].join(' '));
+                add('audio', 'src crossorigin preload autoplay mediagroup loop muted controls buffered volume', [flowContent, 'track source'].join(' '));
                 add('picture', '', 'img source');
                 add('source', 'src srcset type media sizes');
                 add('track', 'kind src srclang label default');
-                add('datalist', '', phrasingContent, 'option');
+                add('datalist', '', [phrasingContent, 'option'].join(' '));
                 add('article section nav aside header footer', '', flowContent);
                 add('hgroup', '', 'h1 h2 h3 h4 h5 h6');
-                add('figure', '', flowContent, 'figcaption');
+                add('figure', '', [flowContent, 'figcaption'].join(' '));
                 add('time', 'datetime', phrasingContent);
                 add('dialog', 'open', flowContent);
                 add('command', 'type label icon disabled checked radiogroup command');
                 add('output', 'for form name', phrasingContent);
                 add('progress', 'value max', phrasingContent);
                 add('meter', 'value min max low high optimum', phrasingContent);
-                add('details', 'open', flowContent, 'summary');
+                add('details', 'open', [flowContent, 'summary'].join(' '));
                 add('keygen', 'autofocus challenge disabled form keytype name');
             }
             // Extend with HTML4 attributes unless it's html5-strict
@@ -893,8 +891,8 @@
             });
             // Delete header, footer, sectioning and heading content descendants
             /*each('dt th address', function(name) {
-			delete schema[name].children[name];
-		});*/
+		 delete schema[name].children[name];
+		 });*/
             // Caption can't have tables
             delete schema.caption.children.table;
             // Delete scripts by default due to possible XSS
@@ -1217,6 +1215,23 @@
             addValidElements(settings.extended_valid_elements);
             // Todo: Remove this when we fix list handling to be valid
             addValidChildren('+ol[ul|ol],+ul[ul|ol]');
+            // Some elements are not valid by themselves - require parents
+            each({
+                dd: 'dl',
+                dt: 'dl',
+                li: 'ul ol',
+                td: 'tr',
+                th: 'tr',
+                tr: 'tbody thead tfoot',
+                tbody: 'table',
+                thead: 'table',
+                tfoot: 'table',
+                legend: 'fieldset',
+                area: 'map',
+                param: 'video audio object'
+            }, function(parents, item) {
+                elements[item] && (elements[item].parentsRequired = split(parents));
+            });
             // Delete invalid elements
             settings.invalid_elements && each(explode(settings.invalid_elements), function(item) {
                 elements[item] && delete elements[item];
@@ -2348,7 +2363,7 @@
                                 // Comment
                                 // Padd comment value to avoid browsers from parsing invalid comments as HTML
                                 '>' === value.charAt(0) && (value = ' ' + value);
-                                settings.allow_conditional_comments || '[if' !== value.substr(0, 3) || (value = ' ' + value);
+                                settings.allow_conditional_comments || '[if' !== value.substr(0, 3).toLowerCase() || (value = ' ' + value);
                                 self.comment(value);
                             } else {
                                 (value = matches[2]) ? // CDATA
@@ -2932,6 +2947,30 @@
                     }
                 }
             });
+            settings.allow_unsafe_link_target || self.addAttributeFilter('href', function(nodes) {
+                var node, rel, i = nodes.length;
+                var rules = 'noopener noreferrer';
+
+                function addTargetRules(rel) {
+                    rel = removeTargetRules(rel);
+                    return rel ? [rel, rules].join(' ') : rules;
+                }
+
+                function removeTargetRules(rel) {
+                    var regExp = new RegExp('(' + rules.replace(' ', '|') + ')', 'g');
+                    rel && (rel = Tools.trim(rel.replace(regExp, '')));
+                    return rel ? rel : null;
+                }
+
+                function toggleTargetRules(rel, isUnsafe) {
+                    return isUnsafe ? addTargetRules(rel) : removeTargetRules(rel);
+                }
+                while (i--) {
+                    node = nodes[i];
+                    rel = node.attr('rel');
+                    'a' === node.name && node.attr('rel', toggleTargetRules(rel, '_blank' == node.attr('target')));
+                }
+            });
             // Force anchor names closed, unless the setting "allow_html_in_named_anchor" is explicitly included.
             settings.allow_html_in_named_anchor || self.addAttributeFilter('id,name', function(nodes) {
                 var sibling, prevSibling, parent, node, i = nodes.length;
@@ -3139,6 +3178,14 @@
                         return str;
                     }
 
+                    function decodeSingleHexSequence(escSeq) {
+                        return String.fromCharCode(parseInt(escSeq.slice(1), 16));
+                    }
+
+                    function decodeHexSequences(value) {
+                        return value.replace(/\\[0-9a-f]+/gi, decodeSingleHexSequence);
+                    }
+
                     function processUrl(match, url, url2, url3, str, str2) {
                         str = str || str2;
                         if (str) {
@@ -3148,7 +3195,7 @@
                         }
                         url = decode(url || url2 || url3);
                         if (!settings.allow_script_urls) {
-                            var scriptUrl = url.replace(/[\s\r\n]+/, '');
+                            var scriptUrl = url.replace(/[\s\r\n]+/g, '');
                             if (/(java|vb)script:/i.test(scriptUrl)) {
                                 return '';
                             }
@@ -3169,13 +3216,19 @@
                         });
                         // Parse styles
                         while (matches = styleRegExp.exec(css)) {
+                            styleRegExp.lastIndex = matches.index + matches[0].length;
                             name = matches[1].replace(trimRightRegExp, '').toLowerCase();
                             value = matches[2].replace(trimRightRegExp, '');
-                            // Decode escaped sequences like \65 -> e
-                            value = value.replace(/\\[0-9a-f]+/g, function(e) {
-                                return String.fromCharCode(parseInt(e.substr(1), 16));
-                            });
-                            if (name && value.length > 0) {
+                            if (name && value) {
+                                // Decode escaped sequences like \65 -> e
+                                name = decodeHexSequences(name);
+                                value = decodeHexSequences(value);
+                                // Skip properties with double quotes and sequences like \" \' in their names
+                                // See 'mXSS Attacks: Attacking well-secured Web-Applications by using innerHTML Mutations'
+                                // https://cure53.de/fp170.pdf
+                                if (name.indexOf(invisibleChar) !== -1 || name.indexOf('"') !== -1) {
+                                    continue;
+                                }
                                 // Don't allow behavior name or expression/comments within the values
                                 if (!settings.allow_script_urls && ('behavior' == name || /expression\s*\(|\/\*|\*\//.test(value))) {
                                     continue;
@@ -3189,7 +3242,6 @@
                                 value = value.replace(urlOrStrRegExp, processUrl);
                                 styles[name] = isEncoded ? decode(value, true) : value;
                             }
-                            styleRegExp.lastIndex = matches.index + matches[0].length;
                         }
                         // Compress the styles to reduce it's size for example IE will expand styles
                         compress('border', '', true);
@@ -3225,7 +3277,7 @@
                             for (i = 0, l = styleList.length; i < l; i++) {
                                 name = styleList[i];
                                 value = styles[name];
-                                value !== undefined && value.length > 0 && (css += (css.length > 0 ? ' ' : '') + name + ': ' + value + ';');
+                                value && (css += (css.length > 0 ? ' ' : '') + name + ': ' + value + ';');
                             }
                         }
                     }
@@ -3251,7 +3303,7 @@
                         // Output the styles in the order they are inside the object
                         for (name in styles) {
                             value = styles[name];
-                            value !== undefined && value.length > 0 && (invalidStyles && !isValid(name, elementName) || (css += (css.length > 0 ? ' ' : '') + name + ': ' + value + ';'));
+                            !value || invalidStyles && !isValid(name, elementName) || (css += (css.length > 0 ? ' ' : '') + name + ': ' + value + ';');
                         }
                     }
                     return css;

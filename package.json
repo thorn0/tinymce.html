@@ -1,22 +1,24 @@
 {
   "name": "tinymce.html",
-  "version": "4.4.3",
+  "version": "4.5.2",
   "description": "HTML parsing, filtering and serialization logic extracted from TinyMCE",
   "files": [
     "tinymce.html.js"
   ],
   "main": "tinymce.html.js",
   "devDependencies": {
-    "amdlc": "^0.1.6",
-    "fs-extra": "^0.30",
-    "globby": "^6.0.0",
-    "js-beautify": "^1.6.4",
-    "qunit": "^0.9.1",
-    "tinymce": "tinymce/tinymce.git#4.4.3",
-    "uglify-js": "^2.7.3"
+    "amdlc": "0.1.8",
+    "fs-extra": "2.0",
+    "globby": "6.1.0",
+    "js-beautify": "1.6.8",
+    "qunit": "0.9.1",
+    "tinymce": "tinymce/tinymce.git#4.5.2",
+    "uglify-js": "2.7.5"
   },
   "keywords": [
     "html",
+    "htmlparser",
+    "html parser",
     "tinymce",
     "valid_elements",
     "tag-soup",

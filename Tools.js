@@ -96,6 +96,7 @@ define("tinymce/util/Tools", [
 	}
 
 	return {
+    trim: trim,
 		makeMap: makeMap,
 		each: Arr.each,
 		map: Arr.map,
