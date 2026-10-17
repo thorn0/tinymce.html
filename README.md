@@ -3,6 +3,10 @@
 HTML content. What's interesting about this logic is that it's pure JavaScript.
 It doesn't use any browser-specific APIs and can be used with Node.js.
 
+Versions follow TinyMCE's, except 4.5.3: it's TinyMCE 4.5.2 plus a fix for
+attribute values longer than ~500k characters (e.g. big `data:` images), which
+were lost in Safari and other JavaScriptCore-based environments.
+
 [![Build Status](https://travis-ci.org/thorn0/tinymce.html.svg?branch=master)](https://travis-ci.org/thorn0/tinymce.html)
 [![npm](https://img.shields.io/npm/v/tinymce.html.svg)](https://www.npmjs.com/package/tinymce.html)
 

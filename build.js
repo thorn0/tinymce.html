@@ -33,6 +33,8 @@ code = code.replace('exports.AMDLC_TESTS', 'false');
 code = code.replace(/== undef\b/g, '== undefined');
 code = code.replace(/\/\*(jshint|eslint|globals) .+?\*\//g, '');
 code = code.replace('})(window);', '})(this);');
+// Same matches, but JavaScriptCore gives up on the group form past ~500k chars in one attribute
+code = code.replace('((?:[^\\"])*)', '([^\\"]*)').replace("((?:[^\\'])*)", "([^\\']*)");
 code += '\nmodule.exports = exports.tinymce;';
 code = removeDeadCode(code);
 code = beautify(code);

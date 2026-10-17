@@ -2223,7 +2223,7 @@
                 }
                 // Precompile RegExps and map objects
                 tokenRegExp = new RegExp('<(?:(?:!--([\\w\\W]*?)-->)|(?:!\\[CDATA\\[([\\w\\W]*?)\\]\\]>)|(?:!DOCTYPE([\\w\\W]*?)>)|(?:\\?([^\\s\\/<>]+) ?([\\w\\W]*?)[?/]>)|(?:\\/([^>]+)>)|(?:([A-Za-z0-9\\-_\\:\\.]+)((?:\\s+[^"\'>]+(?:(?:"[^"]*")|(?:\'[^\']*\')|[^>]*))*|\\/|\\s+)>))', 'g');
-                attrRegExp = /([\w:\-]+)(?:\s*=\s*(?:(?:\"((?:[^\"])*)\")|(?:\'((?:[^\'])*)\')|([^>\s]+)))?/g;
+                attrRegExp = /([\w:\-]+)(?:\s*=\s*(?:(?:\"([^\"]*)\")|(?:\'([^\']*)\')|([^>\s]+)))?/g;
                 // Setup lookup tables for empty elements and boolean attributes
                 shortEndedElements = schema.getShortEndedElements();
                 selfClosing = settings.self_closing_elements || schema.getSelfClosingElements();
